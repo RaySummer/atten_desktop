@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<StackPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+           prefHeight="600.0" prefWidth="800.0"
+           fx:controller="com.ray.atten.desktop.presentation.controller.AttendanceController"
+           style="-fx-background-color: white;">
+
+    <children>
+        <VBox alignment="CENTER" spacing="20.0">
+            <children>
+                <Label text="📅" style="-fx-font-size: 80px;" />
+
+                <Label text="考勤統計模組正在開發中..." textFill="#7f8c8d">
+                    <font>
+                        <Font size="24.0" />
+                    </font>
+                </Label>
+
+                <Label text="此處未來將展示每日/每月的打卡報表與統計圖表" textFill="#bdc3c7">
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                </Label>
+            </children>
+        </VBox>
+    </children>
+</StackPane>

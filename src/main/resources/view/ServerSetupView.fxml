@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox alignment="CENTER" spacing="15.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.ray.atten.desktop.presentation.controller.ServerSetupController"
+      prefWidth="400.0" prefHeight="300.0" styleClass="setup-container"> <padding>
+    <Insets bottom="20.0" left="40.0" right="40.0" top="20.0" />
+</padding>
+
+    <Label text="服务器连接配置" styleClass="header-label" />
+
+    <HBox spacing="10.0" alignment="CENTER_LEFT">
+        <Label text="协议:" prefWidth="50.0" styleClass="normal-label" />
+        <ComboBox fx:id="protocolCombo" prefWidth="100.0" styleClass="custom-combo-box" />
+    </HBox>
+
+    <HBox spacing="10.0" alignment="CENTER_LEFT">
+        <Label text="地址:" prefWidth="50.0" styleClass="normal-label" />
+        <TextField fx:id="hostField" HBox.hgrow="ALWAYS" promptText="例如: 192.168.1.100" styleClass="custom-text-field" />
+    </HBox>
+
+    <HBox spacing="10.0" alignment="CENTER_LEFT">
+        <Label text="端口:" prefWidth="50.0" styleClass="normal-label" />
+        <TextField fx:id="portField" prefWidth="100.0" promptText="8821" styleClass="custom-text-field" />
+    </HBox>
+
+    <Button fx:id="connectBtn" text="连接并保存" onAction="#onConnect" prefWidth="200.0" styleClass="accent-button" />
+
+    <Label fx:id="statusLabel" text="请输入服务器信息" wrapText="true" alignment="CENTER" styleClass="muted-label" />
+
+</VBox>

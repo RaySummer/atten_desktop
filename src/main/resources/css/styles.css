@@ -1,0 +1,82 @@
+/* 设置所有按钮的基本样式 */
+.button {
+    -fx-font-size: 12pt; /* 增大字体 */
+    -fx-padding: 8px 10px; /* 增加内边距 */
+    -fx-background-radius: 5; /* 轻微圆角 */
+}
+
+/* 拍照/确定按钮 (强调色) */
+#btnCapture, #btnConfirm {
+    -fx-background-color: #90e093; /* 绿色 */
+    -fx-text-fill: white; /* 白色文字 */
+}
+
+/* 重拍/取消按钮 (辅助色) */
+#btnRetake, #btnCancel {
+    -fx-background-color: #ef726a; /* 红色 */
+    -fx-text-fill: white;
+}
+
+/* 重拍按钮 (辅助色) */
+#btnRetake {
+    -fx-background-color: #efbc6f; /* 红色 */
+    -fx-text-fill: white;
+}
+
+/* 鼠标悬停效果 */
+.button:hover {
+    -fx-opacity: 0.8; /* 悬停时变暗 */
+}
+
+#videoImageView {
+    -fx-border-color: #AAAAAA;
+    -fx-border-width: 2px;
+    -fx-border-radius: 5px;
+    -fx-border-insets: 2px;
+    /* --- 增强立体感：添加投影效果 --- */
+    /*-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 10, 0.5, 0, 0);*/
+}
+
+/* 布局间距类 */
+.detail-grid-container {
+    -fx-padding: 20 0 0 0;
+}
+
+.photo-section {
+    -fx-padding: 30 10 30 10;
+}
+
+.info-section {
+    -fx-padding: 30 10 30 10;
+}
+
+.action-group {
+    -fx-padding: 10 0 0 0;
+}
+
+.content-separator {
+    -fx-padding: 0;
+}
+
+.footer-separator {
+    -fx-padding: 20 0 0 0;
+}
+
+.small-font {
+    -fx-font-size: 10px;
+}
+
+.title-center {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+/* 摄像头预览区的边距和容器样式 */
+.camera-preview-container {
+    -fx-padding: 10;
+    -fx-background-color: #000000; /* 无论什么模式，预览区域通常固定为黑色 */
+}
+
+.camera-controls-bar {
+    -fx-padding: 15 10 15 10;
+}

@@ -1,0 +1,206 @@
+/* 全局变量 */
+.root {
+    -fx-base: #f4f4f4;
+    -fx-background: #f4f4f4;
+    -fx-control-inner-background: #ffffff;
+
+    -fx-bg-main: #f4f4f4;
+    -fx-bg-content: #ffffff;
+    -fx-bg-sidebar: #2c3e50;
+
+    -fx-text-main: #2c3e50;
+    -fx-text-muted: #7f8c8d;
+    -fx-text-nav: #ffffff;
+
+    -fx-accent: #2196F3;
+}
+.label, .table-cell {
+    -fx-text-fill: -fx-text-main;
+}
+.sidebar {
+    -fx-background-color: -fx-bg-sidebar;
+}
+
+.sidebar-title {
+    -fx-text-fill: -fx-text-nav;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: -fx-text-nav;
+    -fx-alignment: CENTER_LEFT;
+    -fx-cursor: hand;
+    -fx-padding: 0 0 0 20;
+}
+
+.nav-button:hover {
+    -fx-background-color: -fx-nav-hover;
+}
+
+.content-area {
+    -fx-background-color: -fx-bg-main;
+}
+
+.placeholder-label {
+    -fx-text-fill: -fx-text-muted;
+}
+
+.main-content-pane {
+    -fx-background-color: -fx-bg-content;
+}
+
+.normal-label {
+    -fx-text-fill: -fx-text-main;
+    -fx-font-size: 14px;
+}
+
+.header-label {
+    -fx-text-fill: -fx-text-main;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.muted-label {
+    -fx-text-fill: -fx-text-muted;
+}
+
+/* 蓝色操作按钮 */
+.accent-button {
+    -fx-background-color: #007bff; /* 亮色模式保留经典蓝色 */
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+}
+.accent-button:hover {
+    -fx-background-color: #0069d9;
+}
+
+/* 输入框和下拉框在白底下的样式 */
+.custom-text-field, .custom-choice-box, .custom-combo-box {
+    -fx-background-color: white;
+    -fx-border-color: #ced4da;
+    -fx-border-radius: 4;
+}
+
+.title-label {
+    -fx-text-fill: -fx-text-main;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+/* TabPane 亮色基础样式 */
+.custom-tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: transparent;
+}
+
+.custom-tab-pane .tab {
+    -fx-background-color: #e1e1e1;
+}
+
+.custom-tab-pane .tab:selected {
+    -fx-background-color: white;
+}
+
+/* 主题选择按钮默认样式 */
+.theme-toggle-button {
+    -fx-background-color: #f0f0f0;
+    -fx-text-fill: #333333;
+    -fx-border-color: #cccccc;
+    -fx-cursor: hand;
+}
+
+.setup-container {
+    -fx-background-color: -fx-bg-content; /* 亮色下通常是白色 */
+}
+
+/* 表格整体边框 */
+.custom-table-view {
+    -fx-background-color: transparent;
+    -fx-border-color: #dee2e6;
+}
+
+/* 表头样式 */
+.custom-table-view .column-header {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #dee2e6;
+}
+
+.custom-table-view .column-header .label {
+    -fx-text-fill: #495057;
+    -fx-font-weight: bold;
+}
+
+/* 单元格样式 */
+.custom-table-view .table-cell {
+    -fx-text-fill: #212529;
+    -fx-alignment: CENTER;
+}
+
+.status-label-important {
+    -fx-text-fill: #d32f2f; /* 红色警告 */
+    -fx-font-weight: bold;
+}
+
+.bold-label {
+    -fx-text-fill: -fx-text-main;
+    -fx-font-weight: bold;
+}
+
+.image-view-border {
+    -fx-border-color: #333333;
+    -fx-border-width: 2px;
+}
+
+.normal-button {
+    -fx-background-color: #e0e0e0;
+    -fx-text-fill: #333333;
+}
+
+/* 图片边框 */
+.image-view-border {
+    -fx-border-color: #AAAAAA;
+    -fx-border-width: 1px;
+    -fx-background-color: #f9f9f9;
+}
+
+/* 指纹容器 */
+.fingerprint-box {
+    -fx-border-color: #AAAAAA;
+    -fx-border-width: 1px;
+    -fx-background-color: #f9f9f9;
+}
+
+.pin-highlight {
+    -fx-text-fill: #333333; /* 亮色模式下 PIN 码稍微加重颜色 */
+}
+
+/* 亮色模式下的控制栏背景，可以让控制区稍微有一点灰度区分 */
+.camera-controls-bar {
+    -fx-background-color: -fx-bg-main;
+}
+
+/* 针对拍照界面的特殊按钮反馈 */
+#btnCapture {
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+}
+
+.table-view .column-header {
+    -fx-background-color: #eeeeee;
+}
+
+.action-btn-detail {
+    -fx-background-color: #f0ad4e;
+    -fx-text-fill: white;
+}
+.action-btn-sync {
+    -fx-background-color: #5bc0de;
+    -fx-text-fill: white;
+}
+.status-active {
+    -fx-text-fill: green;
+    -fx-font-weight: bold;
+}
+.status-inactive {
+    -fx-text-fill: red;
+}

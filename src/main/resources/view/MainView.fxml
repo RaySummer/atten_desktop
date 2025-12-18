@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane fx:id="mainContainer" prefHeight="720.0" prefWidth="1100.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.ray.atten.desktop.presentation.controller.MainController">
+
+    <left>
+        <VBox prefWidth="220.0" spacing="5.0" styleClass="sidebar">
+            <children>
+                <Label text="考勤管理系统" styleClass="sidebar-title">
+                    <font>
+                        <Font name="System Bold" size="20.0" />
+                    </font>
+                    <VBox.margin>
+                        <Insets bottom="30.0" left="20.0" right="20.0" top="30.0" />
+                    </VBox.margin>
+                </Label>
+
+                <Button fx:id="btnEmployee" onAction="#showEmployeeView" prefHeight="50.0" prefWidth="220.0"
+                        text=" 👥 员工管理" styleClass="nav-button">
+                    <font>
+                        <Font size="15.0" />
+                    </font>
+                </Button>
+
+                <Button fx:id="btnAttendance" onAction="#showAttendanceView" prefHeight="50.0" prefWidth="220.0"
+                        text=" 📅 考勤统计" styleClass="nav-button">
+                    <font>
+                        <Font size="15.0" />
+                    </font>
+                </Button>
+
+                <Region VBox.vgrow="ALWAYS" />
+
+                <Separator opacity="0.2" />
+
+                <Button fx:id="btnSettings" onAction="#showSettingView" prefHeight="50.0" prefWidth="220.0"
+                        text=" ⚙️ 系统设置" styleClass="nav-button">
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                </Button>
+            </children>
+        </VBox>
+    </left>
+
+    <center>
+        <StackPane fx:id="contentArea" styleClass="content-area">
+            <Label text="请从左侧选择功能模块" styleClass="placeholder-label">
+                <font>
+                    <Font size="20.0" />
+                </font>
+            </Label>
+        </StackPane>
+    </center>
+
+</BorderPane>

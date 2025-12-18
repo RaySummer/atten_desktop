@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.ray.atten.desktop.presentation.controller.EmployeeDetailController"
+      prefHeight="550.0" prefWidth="750.0" styleClass="main-content-pane">
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
+    </padding>
+
+    <Label text="員工錄入詳情" styleClass="header-label, title-center" alignment="TOP_CENTER"/>
+
+    <Separator VBox.vgrow="NEVER" styleClass="content-separator"/>
+
+    <GridPane alignment="TOP_CENTER" VBox.vgrow="ALWAYS" styleClass="detail-grid-container">
+        <columnConstraints>
+            <ColumnConstraints hgrow="ALWAYS" percentWidth="50.0" halignment="CENTER"/>
+            <ColumnConstraints hgrow="ALWAYS" percentWidth="50.0" halignment="CENTER"/>
+        </columnConstraints>
+
+        <VBox alignment="TOP_CENTER" spacing="5" GridPane.columnIndex="0" GridPane.rowIndex="0" styleClass="photo-section">
+            <Label text="員工照片" styleClass="bold-label"/>
+            <ImageView fx:id="photoImageView" fitHeight="260.0" fitWidth="180.0"
+                       pickOnBounds="true" preserveRatio="false"
+                       onMouseClicked="#handleImageClickToZoom"
+                       styleClass="image-view-border"/>
+            <Label text="點擊圖片放大" styleClass="muted-label, small-font"/>
+        </VBox>
+
+        <VBox spacing="10" alignment="TOP_LEFT" GridPane.columnIndex="1" GridPane.rowIndex="0" styleClass="info-section">
+
+            <Label text="基本信息" styleClass="bold-label"/>
+            <GridPane hgap="10" vgap="5">
+                <columnConstraints>
+                    <ColumnConstraints hgrow="NEVER" minWidth="90" prefWidth="90"/>
+                    <ColumnConstraints hgrow="ALWAYS" minWidth="150" prefWidth="250"/>
+                </columnConstraints>
+                <Label text="PIN 碼:" styleClass="normal-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                <Label fx:id="pinLabel" text="[N/A]" styleClass="bold-label, pin-highlight" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+                <Label text="姓名:" styleClass="normal-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                <Label fx:id="nameLabel" text="[未設置]" styleClass="bold-label" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+                <Label text="部門:" styleClass="normal-label" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                <Label fx:id="deptLabel" text="[待加載]" styleClass="normal-label" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+
+                <Label text="入職時間:" styleClass="normal-label" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                <Label fx:id="entryDateLabel" text="[待加載]" styleClass="normal-label" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+
+                <Label text="狀態:" styleClass="normal-label" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+                <Label fx:id="statusLabel" text="[在職]" styleClass="normal-label" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+            </GridPane>
+
+            <VBox spacing="5" styleClass="action-group">
+                <Label text="照片操作:" styleClass="bold-label"/>
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Button fx:id="captureButton" text="📷 拍照錄入" prefWidth="120" onAction="#handleCapturePhoto" styleClass="normal-button"/>
+                    <Button fx:id="uploadButton" text="📂 上傳照片" prefWidth="120" onAction="#handleUploadPhoto" styleClass="normal-button"/>
+                </HBox>
+            </VBox>
+
+            <VBox spacing="5" styleClass="action-group">
+                <Label text="指紋操作:" styleClass="bold-label"/>
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <HBox alignment="CENTER" spacing="10" prefWidth="80.0" prefHeight="100.0"
+                          styleClass="fingerprint-box">
+                        <ImageView fx:id="fingerprint1ImageView" fitWidth="70.0"
+                                   fitHeight="90.0"
+                                   onMouseClicked="#handleFingerprintClickToZoom"
+                                   pickOnBounds="true" preserveRatio="true"/>
+                    </HBox>
+
+                    <Button alignment="BOTTOM_CENTER" fx:id="uploadFingerprintButton" text="👆 录入指紋" prefWidth="120"
+                            onAction="#handleUploadFingerprint" styleClass="accent-button"/>
+                </HBox>
+            </VBox>
+        </VBox>
+    </GridPane>
+
+    <Separator VBox.vgrow="NEVER" styleClass="footer-separator"/>
+
+    <HBox alignment="CENTER_RIGHT" spacing="10" VBox.vgrow="NEVER">
+        <Button fx:id="confirmButton" text="確定" prefWidth="80.0" onAction="#handleConfirm" styleClass="accent-button"/>
+        <Button fx:id="cancelButton" text="取消" prefWidth="80.0" onAction="#handleCancel" styleClass="normal-button"/>
+    </HBox>
+</VBox>

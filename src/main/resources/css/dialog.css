@@ -1,0 +1,44 @@
+/* dialog.css */
+
+/* --- 彈窗根容器樣式 --- */
+.dialog-root {
+    /* 設置背景色、邊框和圓角 */
+    -fx-background-color: #f7f7f7;
+    -fx-border-color: #bbbbbb;
+    -fx-border-width: 1px;
+    -fx-background-radius: 5px;
+    -fx-border-radius: 5px;
+}
+
+/* --- 通用按鈕樣式 --- */
+.dialog-button {
+    -fx-background-color: #e0e0e0;
+    -fx-text-fill: #333333;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 3px;
+    -fx-background-radius: 3px;
+    -fx-font-weight: bold;
+    -fx-padding: 5 15 5 15;
+}
+
+.dialog-button:hover {
+    -fx-background-color: #d0d0d0;
+}
+
+/* --- 確定按鈕 (突出顯示) --- */
+.confirm-button {
+    -fx-background-color: #0078d4; /* 藍色 */
+    -fx-text-fill: white;
+    -fx-border-color: #0078d4;
+}
+
+.confirm-button:hover {
+    -fx-background-color: #005bb5; /* 藍色更深 */
+}
+
+/* --- 取消按鈕 (可選，通常是中性色) --- */
+.cancel-button {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #333333;
+    -fx-border-color: #aaaaaa;
+}

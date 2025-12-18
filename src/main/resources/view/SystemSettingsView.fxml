@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="20.0" styleClass="main-content-pane" xmlns="http://javafx.com/javafx/8"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.ray.atten.desktop.presentation.controller.SystemSettingsController">
+
+    <padding>
+        <Insets top="30.0" left="30.0" right="30.0" bottom="30.0"/>
+    </padding>
+
+    <Label text="系统设置" styleClass="title-label"/>
+
+    <TabPane tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS" styleClass="custom-tab-pane">
+        <tabs>
+            <Tab text="服务器连接">
+                <content>
+                    <VBox spacing="15.0">
+                        <padding>
+                            <Insets top="20.0"/>
+                        </padding>
+                        <fx:include source="ServerSetupView.fxml"/>
+                    </VBox>
+                </content>
+            </Tab>
+
+            <Tab text="外观主题">
+                <content>
+                    <VBox spacing="20.0">
+                        <padding>
+                            <Insets top="20.0"/>
+                        </padding>
+                        <Label text="选择您喜欢的主题风格：" styleClass="normal-label"/>
+                        <HBox spacing="15.0" alignment="CENTER_LEFT">
+                            <Button fx:id="btnLight" text="亮色模式" onAction="#setLightMode" prefWidth="120.0" styleClass="theme-toggle-button"/>
+                            <Button fx:id="btnDark" text="深色模式" onAction="#setDarkMode" prefWidth="120.0" styleClass="theme-toggle-button"/>
+                        </HBox>
+                        <Label text="注意：切换主题后将立即生效" styleClass="muted-label" style="-fx-font-size: 12px;"/>
+                    </VBox>
+                </content>
+            </Tab>
+
+            <Tab text="更多设置" disable="true">
+                <content>
+                    <AnchorPane/>
+                </content>
+            </Tab>
+        </tabs>
+    </TabPane>
+</VBox>
