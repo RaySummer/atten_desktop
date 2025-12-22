@@ -71,7 +71,7 @@ public class FingerprintCaptureController {
         this.employee = employee;
         if (employee != null) {
             pinLabel.setText(employee.getPin() != null ? employee.getPin() : "[N/A]");
-            nameLabel.setText(employee.getName() != null ? employee.getName() : "[未設置]");
+            nameLabel.setText(employee.getName() != null ? employee.getName() : "[未设置]");
         }
     }
 
@@ -95,7 +95,7 @@ public class FingerprintCaptureController {
         }
 
         // 立即更新提示信息
-        statusMessageLabel.setText(isReconnect ? "正在嘗試重新連接設備 (10秒超時)..." : "正在嘗試連接設備 (10秒超時)...");
+        statusMessageLabel.setText(isReconnect ? "正在尝试重新连接设备 (10秒超时)..." : "正在尝试重新连接设备 (10秒超时)...");
         statusMessageLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: orange;");
     }
 
@@ -161,7 +161,7 @@ public class FingerprintCaptureController {
     private void updateConnectionStatus(boolean connected) {
         if (connected) {
             // ========================= 连接成功 =========================
-            statusMessageLabel.setText("設備已連接，可以采集指紋。");
+            statusMessageLabel.setText("设备已连接，可以采集指纹。");
             statusMessageLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: green;");
 
             // 满足要求：连接成功，隐藏重连按钮，启用采集
@@ -175,7 +175,7 @@ public class FingerprintCaptureController {
             // ========================= 连接失败或超时 =========================
 
             // 满足要求：只提示通用失败信息，不带异常细节
-            statusMessageLabel.setText("連接設備失敗。請檢查設備連接，然後嘗試重新連接。");
+            statusMessageLabel.setText("连接设备失败。请检查设备，然后尝试重新连接。");
             statusMessageLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: red;");
 
             // 满足要求：连接失败，显示重连按钮，并确保它是可点击的
@@ -210,7 +210,7 @@ public class FingerprintCaptureController {
         captureButton.setDisable(true);
         verifyButton.setDisable(true);
         saveButton.setDisable(true);
-        statusMessageLabel.setText("請將手指放到指紋儀上...");
+        statusMessageLabel.setText("请将手指放到指纹仪器上...");
         statusMessageLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: orange;");
 
         new Thread(() -> {
@@ -220,13 +220,13 @@ public class FingerprintCaptureController {
                 if (result != null) {
                     capturedResult = result;
                     fingerprintDisplay.setImage(result.getFingerprintImage());
-                    statusMessageLabel.setText("指紋采集成功！");
+                    statusMessageLabel.setText("指纹采集成功！");
                     statusMessageLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: green;");
 
                     verifyButton.setDisable(false);
                     saveButton.setDisable(false);
                 } else {
-                    statusMessageLabel.setText("指紋采集失敗或已取消。");
+                    statusMessageLabel.setText("指纹采集失败或已取消。");
                     statusMessageLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: red;");
                     verifyButton.setDisable(true);
                     saveButton.setDisable(true);
@@ -242,29 +242,29 @@ public class FingerprintCaptureController {
     @FXML
     private void handleVerifyFingerprint() {
         if (capturedResult == null) {
-            CustomAlertDialog.showWarning("比對失敗", "請先成功采集指紋。");
+            CustomAlertDialog.showWarning("比对失败", "请先成功采集指纹。");
             return;
         }
 
         String storedBase64 = employee.getFingerprint();
 
         if (storedBase64 == null || storedBase64.isEmpty()) {
-            CustomAlertDialog.showWarning("比對失敗", "該員工未錄入初始指紋，無法比對。");
+            CustomAlertDialog.showWarning("比对失败", "该员工未录入初始指纹，无法比对。");
             return;
         }
 
         byte[] storedTemplate = FingerprintUtil.base64ToBlob(storedBase64);
         if (storedTemplate == null || storedTemplate.length == 0) {
-            CustomAlertDialog.showWarning("比對失敗", "員工存儲的指紋模板無效或轉換失敗。");
+            CustomAlertDialog.showWarning("比对失败", "员工存储的指纹无效或转换失败。");
             return;
         }
 
         boolean matched = FingerprintUtil.verify(capturedResult.getTemplate(), storedTemplate, 0);
 
         if (matched) {
-            CustomAlertDialog.showInfo("比對結果", "比對成功！指紋匹配。");
+            CustomAlertDialog.showInfo("比对结果", "比对成功！指纹匹配。");
         } else {
-            CustomAlertDialog.showWarning("比對結果", "比對失敗！指紋不匹配。");
+            CustomAlertDialog.showWarning("比对结果", "比对失败！指纹不匹配。");
         }
     }
 
@@ -274,7 +274,7 @@ public class FingerprintCaptureController {
     @FXML
     private void handleSaveFingerprint() {
         if (capturedResult == null) {
-            CustomAlertDialog.showWarning("保存失敗", "沒有可保存的指紋數據。");
+            CustomAlertDialog.showWarning("白村失败", "没有可以保存的指纹数据。");
             return;
         }
 

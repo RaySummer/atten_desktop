@@ -17,6 +17,10 @@ public class AppConstants {
      */
     public static String API_BASE_URL = "http://localhost:8821";
 
+    public static String YYYY_MM_DD_HH_mm_SS = "yyyy-MM-dd HH:mm:ss";
+
+    public static String YYYY_MM_DD = "yyyy-MM-dd";
+
     /**
      * 核心优化：由 Controller 调用，根据界面输入的三部分拼接完整的 URL
      * * @param protocol "http://" 或 "https://"
@@ -76,25 +80,42 @@ public class AppConstants {
     // 需要调用的API地址全部写到这里
     //-----------------------
     /**
-     * 員工查詢的具體 API 端點。
+     * 員工查詢
      */
     public static final String API_EMPLOYEE_SEARCH = API_BASE_URL + "/api/oa-employees/query";
+
+    /**
+     * 查询考勤数据
+     */
+    public static final String API_ATTENDANCE_LOG_SEARCH = API_BASE_URL + "/api/atten/query";
     /**
      * 获取考勤组
      */
-    public static final String API_ATTENDANCE_DEVICE_SEARCH = API_BASE_URL + "/api/oa-employees/atten-group";
+    public static final String API_ATTENDANCE_DEVICE_SEARCH = API_BASE_URL + "/api/atten/group";
     /**
      * 同步人员/指纹/照片到Middle
      */
     public static final String API_SYNC_TO_MIDDLE = API_BASE_URL + "/api/sync/sync-employee";
+    /**
+     * 同步考勤数据
+     */
+    public static final String API_SYNC_ATTENDANCE = API_BASE_URL + "/api/device-commend";
+    /**
+     * 获取考勤机列表
+     */
+    public static final String API_DEVICE_SEARCH = API_BASE_URL + "/api/device/query";
+    /**
+     * 添加或修改考勤机
+     */
+    public static final String API_ADD_OR_UPDATE_DEVICE = API_BASE_URL + "/api/management/devices";
 
 
-    public static String dateTimeFormatter(LocalDateTime dateTime) {
+    public static String dateTimeFormatter(LocalDateTime dateTime, String formatType) {
         if (dateTime == null) {
             return "";
         }
         // 定義目標格式 (注意：MM 是月份，mm 是分鐘)
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(formatType);
         return formatter.format(dateTime);
     }
 

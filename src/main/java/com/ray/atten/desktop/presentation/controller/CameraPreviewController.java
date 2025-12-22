@@ -2,176 +2,204 @@ package com.ray.atten.desktop.presentation.controller;
 
 import com.github.sarxos.webcam.Webcam;
 import com.ray.atten.desktop.utils.ImageConverter;
+import com.ray.atten.desktop.utils.ImageCropperTool;
+import com.ray.atten.desktop.utils.LoadingManager;
+import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.awt.*;
+import java.awt.Dimension;
 import java.awt.image.BufferedImage;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 public class CameraPreviewController {
 
     @FXML
-    private ImageView videoImageView; // 用于显示视频流或拍摄的照片
+    private VBox rootVBox;
     @FXML
-    private Button btnCapture; // 拍照按钮
+    private ImageView videoImageView;
     @FXML
-    private Button btnRetake;  // 重拍按钮
+    private Pane cropContainer;
     @FXML
-    private Button btnConfirm; // 确定按钮
+    private Button btnCapture, btnRetake, btnConfirm, btnCancel;
     @FXML
-    private Button btnCancel;  // 取消按钮
+    private Region flashPane;
 
-    // 内部变量
+    private ImageCropperTool cropperTool;
     private Webcam webcam;
     private Thread cameraThread;
-    private Image capturedImage; // 存储拍摄到的照片
-    private EmployeeDetailController detailController; // 用于回传数据的控制器
-    private final double PREVIEW_W = 640.0;
-    private final double PREVIEW_H = 480.0;
-
+    private Image capturedImage;
     private String photoBase64;
+    private boolean confirmed = false;
+    private final AtomicBoolean isClosing = new AtomicBoolean(false);
+    @Autowired
+    private LoadingManager loadingManager;
+
+
+    public boolean isConfirmed() {
+        return confirmed;
+    }
 
     public String getPhotoBase64() {
         return photoBase64;
     }
 
-    // 假设父控制器实例通过外部方法注入
-    private EmployeeDetailController parentController;
+    @FXML
+    public void initialize() {
+        loadingManager.hide();
+        videoImageView.setPreserveRatio(true);
+        // 重要：先建立工具类实例
+        if (cropContainer != null) {
+            cropperTool = new ImageCropperTool(cropContainer);
+        }
+        updateUIState(false);
+        startCamera();
+    }
 
-    // --- 初始化和生命周期 ---
+    private void updateUIState(boolean isCaptured) {
+        // 安全校验，防止注入失败导致的 NPE
+        if (btnCapture == null || btnConfirm == null) return;
 
-    public Image getCapturedImage() {
-        return capturedImage;
+        btnCapture.setVisible(!isCaptured);
+        btnCapture.setManaged(!isCaptured);
+        btnRetake.setVisible(isCaptured);
+        btnRetake.setManaged(isCaptured);
+        btnConfirm.setVisible(isCaptured);
+        btnConfirm.setManaged(isCaptured);
+
+        if (cropperTool != null) {
+            if (isCaptured) cropperTool.activate();
+            else cropperTool.deactivate();
+        }
     }
 
     @FXML
-    public void initialize() {
-        // 初始状态：显示拍照和取消，隐藏重拍和确定
-        btnCapture.setVisible(true);
-        btnRetake.setVisible(false);
-        btnConfirm.setVisible(false);
-        btnCancel.setVisible(true);
-        // 确保 videoImageView 的尺寸与预览区域匹配
-        videoImageView.setFitWidth(PREVIEW_W);
-        videoImageView.setFitHeight(PREVIEW_H);
-        videoImageView.setPreserveRatio(true);
+    private void handleCapture() {
+        if (webcam != null && webcam.isOpen()) {
+            runFlashAnimation();
+            BufferedImage image = webcam.getImage();
+            if (image != null) {
+                capturedImage = SwingFXUtils.toFXImage(image, null);
+                videoImageView.setImage(capturedImage);
+                updateUIState(true);
+            }
+        }
+    }
 
-        // 初始化摄像头
-        startCamera();
+    @FXML
+    private void handleConfirm() {
+        if (capturedImage != null && cropperTool != null) {
+            try {
+                javafx.scene.shape.Rectangle rect = cropperTool.getSelection();
+                BufferedImage fullBI = SwingFXUtils.fromFXImage(capturedImage, null);
+
+                // 获取 ImageView 此时真实的显示宽高 (考虑比例自适应)
+                double viewW = videoImageView.getBoundsInParent().getWidth();
+                double viewH = videoImageView.getBoundsInParent().getHeight();
+
+                double ratioX = fullBI.getWidth() / viewW;
+                double ratioY = fullBI.getHeight() / viewH;
+
+                int x = (int) (rect.getX() * ratioX);
+                int y = (int) (rect.getY() * ratioY);
+                int w = (int) (rect.getWidth() * ratioX);
+                int h = (int) (rect.getHeight() * ratioY);
+
+                // 强制修正坐标，防止 getSubimage 坐标越界异常
+                x = Math.max(0, Math.min(x, fullBI.getWidth() - 1));
+                y = Math.max(0, Math.min(y, fullBI.getHeight() - 1));
+                w = Math.max(1, Math.min(w, fullBI.getWidth() - x));
+                h = Math.max(1, Math.min(h, fullBI.getHeight() - y));
+
+                BufferedImage cropped = fullBI.getSubimage(x, y, w, h);
+                this.photoBase64 = ImageConverter.encodeImageToBase64(ImageConverter.resizeImage(cropped, 480, 480));
+                this.confirmed = true;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        closeStage();
+    }
+
+    @FXML
+    private void handleRetake() {
+        capturedImage = null;
+        updateUIState(false);
+    }
+
+    @FXML
+    private void handleCancel() {
+        this.confirmed = false;
+        closeStage();
     }
 
     public void shutdown() {
         closeStage();
     }
 
-    // ------------------------------------
-    // --- 摄像头控制 ---
-    // ------------------------------------
-    private void startCamera() {
-        // ... 摄像头初始化逻辑 (省略)
-        webcam = Webcam.getDefault();
-        webcam.setViewSize(new Dimension((int) PREVIEW_W, (int) PREVIEW_H));
-        webcam.open();
-
-        // 启动新的线程来读取视频帧
-        cameraThread = new Thread(() -> {
-            while (true) {
-                BufferedImage image = webcam.getImage();
-                if (image != null) {
-                    Image fxImage = SwingFXUtils.toFXImage(image, null);
-                    Platform.runLater(() -> {
-                        // 仅在未拍照状态下更新视频流
-                        if (btnCapture.isVisible()) {
-                            videoImageView.setImage(fxImage);
-                        }
-                    });
-                }
-                try {
-                    Thread.sleep(50); // 控制帧率
-                } catch (InterruptedException e) {
-                    break;
-                }
-            }
-        });
-        cameraThread.setDaemon(true);
-        cameraThread.start();
-    }
-
-    // ------------------------------------
-    // --- 按钮事件逻辑 ---
-    // ------------------------------------
-
-    @FXML
-    private void handleCapture() {
-        // 停止视频流的视觉更新
-        BufferedImage image = webcam.getImage();
-        if (image != null) {
-            // 拍摄成功，更新 ImageView 显示拍摄的照片
-            capturedImage = SwingFXUtils.toFXImage(image, null);
-            videoImageView.setImage(capturedImage);
-
-            // 切换按钮状态：拍照 -> 重拍 + 确定
-            btnCapture.setVisible(false);
-            btnRetake.setVisible(true);
-            btnConfirm.setVisible(true);
-        }
-    }
-
-    @FXML
-    private void handleRetake() {
-        // 清除拍摄的照片
-        capturedImage = null;
-
-        // 恢复视频流显示 (因为 cameraThread 仍在运行，只需更新按钮状态，让它继续在 Platform.runLater 中更新 videoImageView)
-
-        // 切换按钮状态：重拍 + 确定 -> 拍照
-        btnCapture.setVisible(true);
-        btnRetake.setVisible(false);
-        btnConfirm.setVisible(false);
-    }
-
-    @FXML
-    private void handleCancel() {
-        closeStage();
-    }
-
-    /**
-     * 关闭摄像头和窗口
-     */
     private void closeStage() {
-        if (webcam != null && webcam.isOpen()) {
-            webcam.close();
-        }
         if (cameraThread != null) {
             cameraThread.interrupt();
         }
-        // 获取当前 Stage 并关闭
-        Stage stage = (Stage) btnCancel.getScene().getWindow();
-        stage.close();
+        Platform.runLater(() -> {
+            if (webcam != null && webcam.isOpen()) {
+                webcam.close();
+            }
+            Stage stage = (Stage) btnCancel.getScene().getWindow();
+            stage.close();
+        });
     }
 
-    @FXML
-    private void handleConfirm() {
-        if (capturedImage == null) {
-            closeStage();
-            return;
+    private void startCamera() {
+        try {
+            webcam = Webcam.getDefault();
+            if (webcam != null) {
+                webcam.setViewSize(new Dimension(640, 480));
+                webcam.open();
+                cameraThread = new Thread(() -> {
+                    while (!Thread.interrupted()) {
+                        if (webcam != null && webcam.isOpen()) {
+                            BufferedImage image = webcam.getImage();
+                            if (image != null) {
+                                Image fxImage = SwingFXUtils.toFXImage(image, null);
+                                Platform.runLater(() -> {
+                                    if (btnCapture.isVisible()) videoImageView.setImage(fxImage);
+                                });
+                            }
+                        }
+                        try {
+                            Thread.sleep(40);
+                        } catch (InterruptedException e) {
+                            break;
+                        }
+                    }
+                });
+                cameraThread.setDaemon(true);
+                cameraThread.start();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+    }
 
-        // 1. 圖片處理和壓縮 (省略細節)
-        BufferedImage originalImage = SwingFXUtils.fromFXImage(capturedImage, null);
-        BufferedImage resizedImage = ImageConverter.resizeImage(originalImage, 720, 480);
-
-        // 2. 設置 Base64 字符串
-        this.photoBase64 = ImageConverter.encodeImageToBase64(resizedImage); // <--- 設置給字段
-
-        // 3. 關閉窗口
-        closeStage();
+    private void runFlashAnimation() {
+        FadeTransition flash = new FadeTransition(Duration.millis(100), flashPane);
+        flash.setFromValue(0.0);
+        flash.setToValue(0.8);
+        flash.setCycleCount(2);
+        flash.setAutoReverse(true);
+        flash.play();
     }
 }

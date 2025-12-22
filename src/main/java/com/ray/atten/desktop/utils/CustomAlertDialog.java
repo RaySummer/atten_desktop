@@ -4,49 +4,57 @@ import com.ray.atten.desktop.presentation.controller.component.CustomAlertDialog
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 
 public class CustomAlertDialog {
 
-    // 彈窗類型枚舉 (可擴展)
     public enum Type {
         INFO, WARNING, ERROR, CONFIRM
     }
 
-    /**
-     * 顯示一個模態提示窗口
-     *
-     * @param title      窗口標題
-     * @param message    顯示的消息
-     * @param type       消息類型
-     * @param showCancel 是否顯示取消按鈕 (用於 CONFIRM)
-     * @return 如果是 CONFIRM 類型，返回 true 表示用戶點擊了確定
-     */
     private static boolean showDialog(String title, String message, Type type, boolean showCancel) {
         try {
-            // 注意：這裡我們假設這個工具類不需要 Spring 注入 Controller
             FXMLLoader loader = new FXMLLoader(CustomAlertDialog.class.getResource("/view/component/CustomAlertDialogView.fxml"));
             Parent root = loader.load();
 
             CustomAlertDialogController controller = loader.getController();
 
             Stage dialogStage = new Stage();
-            dialogStage.setTitle(title);
+            if (StringUtils.isNotEmpty(title)) {
+                dialogStage.setTitle(title);
+            }
+
+            // 设置模态：必须处理完弹窗才能操作主界面
             dialogStage.initModality(Modality.APPLICATION_MODAL);
-            dialogStage.initStyle(StageStyle.UTILITY); // 隱藏操作系統的標題欄按鈕，顯得更簡潔
+            // 隐藏操作系统标题栏
+            dialogStage.initStyle(StageStyle.TRANSPARENT);
             dialogStage.setResizable(false);
 
             Scene scene = new Scene(root);
-            // 這裡可以設置 CSS
+            // 关键：Scene 背景设为透明，否则 CSS 的圆角外会有黑色背景
+            scene.setFill(Color.TRANSPARENT);
+
+            // --- 动态应用主题 ---
+            String theme = ConfigRepo.getTheme(); // "dark" 或 "light"
+            if ("dark".equalsIgnoreCase(theme)) {
+                root.getStyleClass().add("dark-mode");
+            } else {
+                root.getStyleClass().add("light-mode");
+            }
+
+            // 加载 CSS
             String cssPath = CustomAlertDialog.class.getResource("/css/dialog.css").toExternalForm();
             scene.getStylesheets().add(cssPath);
 
             dialogStage.setScene(scene);
 
+            // 先设置 Stage 再初始化拖拽逻辑
             controller.setDialogStage(dialogStage);
             controller.initialize(message, type.toString(), showCancel);
 
@@ -56,13 +64,13 @@ public class CustomAlertDialog {
 
         } catch (IOException e) {
             e.printStackTrace();
-            // 如果加載失敗，退回到原生 Alert
-            new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR, "自定義彈窗加載失敗: " + e.getMessage()).showAndWait();
+            // 回退到原生 Alert
+            javafx.scene.control.Alert fallback = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+            fallback.setContentText("自定義彈窗加載失敗: " + e.getMessage());
+            fallback.showAndWait();
             return false;
         }
     }
-
-    // --- 靜態調用方法 ---
 
     public static void showWarning(String title, String message) {
         showDialog(title, message, Type.WARNING, false);
@@ -79,5 +87,4 @@ public class CustomAlertDialog {
     public static boolean showConfirmation(String title, String message) {
         return showDialog(title, message, Type.CONFIRM, true);
     }
-
 }

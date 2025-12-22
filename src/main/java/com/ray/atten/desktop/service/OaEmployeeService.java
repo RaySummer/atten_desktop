@@ -12,6 +12,7 @@ import com.ray.atten.desktop.model.AttendanceGroup;
 import com.ray.atten.desktop.model.OaEmployee;
 import com.ray.atten.desktop.utils.AppConstants;
 import com.ray.atten.desktop.utils.HttpClientUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -20,7 +21,7 @@ import java.util.List;
 @Service
 public class OaEmployeeService {
 
-    // ObjectMapper 用於將 Java 對象轉換為 JSON 字符串
+    @Autowired
     private final ObjectMapper objectMapper;
 
     public OaEmployeeService() {

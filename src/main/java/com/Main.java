@@ -8,7 +8,10 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
@@ -57,7 +60,9 @@ public class Main extends Application {
             Parent root = loader.load();
             Scene scene = new Scene(root);
             stage.setScene(scene);
-            stage.setTitle("考勤系统 - 服务器配置");
+            stage.initStyle(StageStyle.TRANSPARENT); // 隱藏操作系統的標題欄按鈕，顯得更簡潔
+//            stage.getIcons().add(new Image(getClass().getResource("/image/logo_big.png")));
+//            stage.setTitle("考勤系统 - 服务器配置");
             stage.show();
         } catch (IOException e) {
             e.printStackTrace();

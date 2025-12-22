@@ -1,5 +1,6 @@
 package com.ray.atten.desktop.utils;
 
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 
 import javax.imageio.ImageIO;
@@ -97,6 +98,28 @@ public class ImageConverter {
             ImageIO.write(image, "jpg", os);
             return Base64.getEncoder().encodeToString(os.toByteArray());
         } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * 将 JavaFX Image 对象转换为 Base64 字符串
+     *
+     * @param fxImage JavaFX 的图片对象
+     * @return Base64 字符串
+     */
+    public static String javafxImageToBase64(Image fxImage) {
+        if (fxImage == null) return null;
+
+        try {
+            // 1. 将 JavaFX Image 转换为 Swing BufferedImage
+            // 注意：这需要依赖 javafx.swing 模块（在 Java 8 中是内置的）
+            BufferedImage bufferedImage = SwingFXUtils.fromFXImage(fxImage, null);
+
+            // 2. 调用你现有的 encodeImageToBase64 方法
+            return encodeImageToBase64(bufferedImage);
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }

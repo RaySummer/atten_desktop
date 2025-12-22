@@ -6,30 +6,33 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.image.Image?>
 <?import javafx.scene.layout.Region?>
 
-<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+<VBox fx:id="dialogRoot" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.ray.atten.desktop.presentation.controller.component.CustomAlertDialogController"
-      styleClass="dialog-root" alignment="CENTER" spacing="15" prefWidth="400.0">
+      styleClass="dialog-root" alignment="CENTER" spacing="20" prefWidth="420.0">
 
     <padding>
-        <Insets top="20.0" right="20.0" bottom="20.0" left="20.0"/>
+        <Insets top="25.0" right="25.0" bottom="25.0" left="25.0"/>
     </padding>
 
     <HBox alignment="CENTER_LEFT" spacing="15" VBox.vgrow="ALWAYS">
-        <ImageView fx:id="iconImageView" fitHeight="32.0" fitWidth="32.0"
-                   preserveRatio="true"/>
+        <children>
+            <ImageView fx:id="iconImageView" fitHeight="45.0" fitWidth="45.0"
+                       preserveRatio="true"/>
 
-        <Label fx:id="messageLabel" text="這是一條自定義警告或提示信息。" wrapText="true"
-               style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+            <Label fx:id="messageLabel" text="这是一条自定义警告或提示信息。" wrapText="true"
+                   styleClass="dialog-message" />
+        </children>
     </HBox>
 
-    <HBox fx:id="buttonBox" alignment="CENTER_RIGHT" spacing="10" VBox.vgrow="NEVER">
-        <Region HBox.hgrow="ALWAYS"/>
-        <Button fx:id="confirmButton" text="確定" prefWidth="80"
-                onAction="#handleConfirm"/>
-        <Button fx:id="cancelButton" text="取消" prefWidth="80"
-                onAction="#handleCancel"/>
+    <HBox fx:id="buttonBox" alignment="CENTER_RIGHT" spacing="12" VBox.vgrow="NEVER">
+        <children>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="confirmButton" text="确定" prefWidth="90"
+                    onAction="#handleConfirm" styleClass="btn-primary" />
+            <Button fx:id="cancelButton" text="取消" prefWidth="90"
+                    onAction="#handleCancel" styleClass="btn-secondary" />
+        </children>
     </HBox>
 </VBox>

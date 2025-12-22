@@ -4,6 +4,8 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
+<?import javafx.scene.text.TextFlow?>
+<?import javafx.scene.text.Text?>
 <VBox spacing="20.0" styleClass="main-content-pane" xmlns="http://javafx.com/javafx/8"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.ray.atten.desktop.presentation.controller.SystemSettingsController">
@@ -35,17 +37,58 @@
                         </padding>
                         <Label text="选择您喜欢的主题风格：" styleClass="normal-label"/>
                         <HBox spacing="15.0" alignment="CENTER_LEFT">
-                            <Button fx:id="btnLight" text="亮色模式" onAction="#setLightMode" prefWidth="120.0" styleClass="theme-toggle-button"/>
-                            <Button fx:id="btnDark" text="深色模式" onAction="#setDarkMode" prefWidth="120.0" styleClass="theme-toggle-button"/>
+                            <Button fx:id="btnLight" text="亮色模式" onAction="#setLightMode" prefWidth="120.0"
+                                    styleClass="theme-toggle-button"/>
+                            <Button fx:id="btnDark" text="深色模式" onAction="#setDarkMode" prefWidth="120.0"
+                                    styleClass="theme-toggle-button"/>
                         </HBox>
                         <Label text="注意：切换主题后将立即生效" styleClass="muted-label" style="-fx-font-size: 12px;"/>
                     </VBox>
                 </content>
             </Tab>
 
-            <Tab text="更多设置" disable="true">
+            <Tab text="关于">
                 <content>
-                    <AnchorPane/>
+                    <AnchorPane>
+                        <children>
+                            <VBox alignment="CENTER" spacing="20.0" AnchorPane.topAnchor="40.0"
+                                  AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
+                                <children>
+                                    <Label text="考勤管理系统 v1.0.0" styleClass="about-title-label"/>
+
+                                    <VBox spacing="10.0" maxWidth="550.0">
+                                        <TextFlow textAlignment="LEFT">
+                                            <Text styleClass="about-content-text"
+                                                  text="    本系统核心功能涵盖员工档案管理、考勤数据统计及硬件设备维护。所有考勤记录均以终端设备原始数据及企业 OA 系统同步结果为准。通过与 Atten_Middle 服务端的深度集成，系统旨在为您提供高实时性、高安全性的考勤数字化管理方案。"/>
+                                        </TextFlow>
+                                    </VBox>
+
+                                    <Separator maxWidth="450.0" opacity="0.3">
+                                        <VBox.margin>
+                                            <Insets top="10.0" bottom="10.0"/>
+                                        </VBox.margin>
+                                    </Separator>
+
+                                    <VBox spacing="8.0" maxWidth="550.0" styleClass="disclaimer-container">
+                                        <Label text="免责声明与隐私协议" styleClass="about-info-label" style="-fx-font-weight: bold;"/>
+                                        <TextFlow textAlignment="LEFT">
+                                            <Text styleClass="about-disclaimer-text"
+                                                  text="    [声明] 用户知悉并同意：使用本软件即视为授权系统将员工基本信息、考勤记录及设备参数上传并存储至 Atten_Middle 服务端。此操作仅用于中间件业务分发与数据同步。&#10;    [承诺] 本系统严格遵守数据保密隐私，所有存储信息仅供企业内部使用，未经授权绝不向任何第三方泄露或用于非办公以外的商业用途。"/>
+                                        </TextFlow>
+                                    </VBox>
+                                </children>
+                            </VBox>
+
+                            <VBox alignment="BOTTOM_RIGHT" spacing="5.0" AnchorPane.bottomAnchor="20.0"
+                                  AnchorPane.rightAnchor="20.0">
+                                <children>
+                                    <Label text="技术支持: ray__summer@hotmail.com" styleClass="about-info-label"/>
+                                    <Label text="Copyright © 2025 Ray. All Rights Reserved."
+                                           styleClass="about-copyright-label"/>
+                                </children>
+                            </VBox>
+                        </children>
+                    </AnchorPane>
                 </content>
             </Tab>
         </tabs>

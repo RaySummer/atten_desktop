@@ -4,58 +4,85 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 
-<BorderPane fx:id="mainContainer" prefHeight="720.0" prefWidth="1100.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.ray.atten.desktop.presentation.controller.MainController">
+<StackPane fx:id="rootStackPane" prefHeight="720.0" prefWidth="1100.0" xmlns="http://javafx.com/javafx/8"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.ray.atten.desktop.presentation.controller.MainController">
 
-    <left>
-        <VBox prefWidth="220.0" spacing="5.0" styleClass="sidebar">
-            <children>
-                <Label text="考勤管理系统" styleClass="sidebar-title">
-                    <font>
-                        <Font name="System Bold" size="20.0" />
-                    </font>
-                    <VBox.margin>
-                        <Insets bottom="30.0" left="20.0" right="20.0" top="30.0" />
-                    </VBox.margin>
-                </Label>
+    <BorderPane fx:id="mainContainer">
+        <left>
+            <VBox prefWidth="220.0" spacing="5.0" styleClass="sidebar">
+                <children>
+                    <!--<HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <VBox.margin>
+                            <Insets bottom="20.0" left="20.0" right="10.0" top="30.0" />
+                        </VBox.margin>
+                        <children>
+                            <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+                                <image>
+                                    <Image url="@/images/logo_big.png" />
+                                </image>
+                            </ImageView>
+                            <Label text="考勤管理" styleClass="sidebar-title">
+                                <font>
+                                    <Font name="System Bold" size="18.0" />
+                                </font>
+                            </Label>
+                        </children>
+                    </HBox>-->
 
-                <Button fx:id="btnEmployee" onAction="#showEmployeeView" prefHeight="50.0" prefWidth="220.0"
-                        text=" 👥 员工管理" styleClass="nav-button">
-                    <font>
-                        <Font size="15.0" />
-                    </font>
-                </Button>
+                    <VBox alignment="CENTER" spacing="12.0">
+                        <VBox.margin>
+                            <Insets bottom="40.0" top="30.0"/>
+                        </VBox.margin>
+                        <children>
+                            <ImageView fitHeight="120.0" fitWidth="120.0" pickOnBounds="true" preserveRatio="true">
+                                <image>
+                                    <Image url="@/images/logo_big.png"/>
+                                </image>
+                            </ImageView>
+                            <Label text="考勤管理系统" styleClass="sidebar-title">
+                                <font>
+                                    <Font name="System Bold" size="16.0"/>
+                                </font>
+                                <style>
+                                    -fx-text-fill: white; /* 假设侧边栏是深色的 */
+                                    -fx-opacity: 0.9;
+                                    -fx-letter-spacing: 2px;
+                                </style>
+                            </Label>
+                        </children>
+                    </VBox>
 
-                <Button fx:id="btnAttendance" onAction="#showAttendanceView" prefHeight="50.0" prefWidth="220.0"
-                        text=" 📅 考勤统计" styleClass="nav-button">
-                    <font>
-                        <Font size="15.0" />
-                    </font>
-                </Button>
+                    <Button fx:id="btnEmployee" onAction="#showEmployeeView" prefHeight="50.0" prefWidth="220.0"
+                            text=" 👥 员工管理" styleClass="nav-button"/>
+                    <Button fx:id="btnAttendance" onAction="#showAttendanceView" prefHeight="50.0" prefWidth="220.0"
+                            text=" 📅 考勤统计" styleClass="nav-button"/>
+                    <Button fx:id="btnDevice" onAction="#showDeviceView" prefHeight="50.0" prefWidth="220.0"
+                            text=" 🛠 设备管理" styleClass="nav-button"/>
+                    <Button fx:id="btnSettings" onAction="#showSettingView" prefHeight="50.0" prefWidth="220.0"
+                            text=" ⚙ 系统设置" styleClass="nav-button"/>
 
-                <Region VBox.vgrow="ALWAYS" />
+                    <Region VBox.vgrow="ALWAYS"/>
+                    <Separator opacity="0.2"/>
+                    <Button fx:id="btnExit" onAction="#handleExit" prefHeight="50.0" prefWidth="220.0" text=" 🚪 退出系统"
+                            styleClass="nav-button-exit"/>
+                </children>
+            </VBox>
+        </left>
 
-                <Separator opacity="0.2" />
-
-                <Button fx:id="btnSettings" onAction="#showSettingView" prefHeight="50.0" prefWidth="220.0"
-                        text=" ⚙️ 系统设置" styleClass="nav-button">
-                    <font>
-                        <Font size="14.0" />
-                    </font>
-                </Button>
-            </children>
-        </VBox>
-    </left>
-
-    <center>
-        <StackPane fx:id="contentArea" styleClass="content-area">
-            <Label text="请从左侧选择功能模块" styleClass="placeholder-label">
-                <font>
-                    <Font size="20.0" />
-                </font>
-            </Label>
-        </StackPane>
-    </center>
-
-</BorderPane>
+        <center>
+            <StackPane fx:id="contentArea" styleClass="content-area">
+                <children>
+                    <Label text="请从左侧选择功能模块" styleClass="placeholder-label">
+                        <font>
+                            <Font size="20.0"/>
+                        </font>
+                    </Label>
+                </children>
+            </StackPane>
+        </center>
+    </BorderPane>
+</StackPane>

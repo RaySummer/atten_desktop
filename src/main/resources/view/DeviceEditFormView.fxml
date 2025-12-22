@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.text.Font?>
+
+<VBox prefWidth="550.0" styleClass="detail-root-pane" xmlns="http://javafx.com/javafx/8"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.ray.atten.desktop.presentation.controller.DeviceEditController">
+
+    <HBox alignment="CENTER_LEFT" prefHeight="60.0" styleClass="drawer-header-area">
+        <padding>
+            <Insets left="25.0" right="25.0"/>
+        </padding>
+        <children>
+            <Label fx:id="formTitle" text="新增设备" styleClass="drawer-title-label"/>
+            <Region HBox.hgrow="ALWAYS"/>
+        </children>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="drawer-scroll-pane">
+        <content>
+            <GridPane vgap="20.0" hgap="15.0">
+                <padding>
+                    <Insets top="30.0" left="30.0" right="30.0" bottom="30.0"/>
+                </padding>
+                <columnConstraints>
+                    <ColumnConstraints hgrow="NEVER" minWidth="100.0" prefWidth="100.0"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+
+                <children>
+                    <Label text="序列号 (SN)" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="form-label"/>
+                    <TextField fx:id="txtSn" promptText="请输入设备唯一序列号" styleClass="form-input" GridPane.rowIndex="0"
+                               GridPane.columnIndex="1"/>
+
+                    <Label text="设备别名" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="form-label"/>
+                    <TextField fx:id="txtAlias" promptText="例如：一楼大门东侧" styleClass="form-input" GridPane.rowIndex="1"
+                               GridPane.columnIndex="1"/>
+
+                    <Label text="安装位置" GridPane.rowIndex="2" GridPane.columnIndex="0" styleClass="form-label"/>
+                    <TextField fx:id="txtLocation" styleClass="form-input" GridPane.rowIndex="2"
+                               GridPane.columnIndex="1"/>
+
+                    <Label text="设备型号" GridPane.rowIndex="3" GridPane.columnIndex="0" styleClass="form-label"/>
+                    <TextField fx:id="txtModel" styleClass="form-input" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                    <Label text="IP 地址" GridPane.rowIndex="4" GridPane.columnIndex="0" styleClass="form-label"/>
+                    <TextField fx:id="txtIp" promptText="192.168.1.100" styleClass="form-input" GridPane.rowIndex="4"
+                               GridPane.columnIndex="1"/>
+
+                    <Label text="状态" GridPane.rowIndex="5" GridPane.columnIndex="0" styleClass="form-label"/>
+                    <CheckBox fx:id="chkActive" text="设备是否激活" selected="true" styleClass="form-checkbox"
+                              GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+                </children>
+            </GridPane>
+        </content>
+    </ScrollPane>
+
+    <HBox alignment="CENTER_RIGHT" prefHeight="80.0" spacing="15.0" styleClass="drawer-footer-area">
+        <padding>
+            <Insets left="25.0" right="25.0"/>
+        </padding>
+        <children>
+            <Button fx:id="confirmButton" onAction="#handleSave"
+                    text="确定" prefWidth="130.0" prefHeight="40.0"
+                    styleClass="primary-confirm-button"/>
+            <Button fx:id="cancelButton" onAction="#handleClose"
+                    text="取消" prefWidth="130.0" prefHeight="40.0"
+                    styleClass="secondary-cancel-button"/>
+        </children>
+    </HBox>
+</VBox>

@@ -1,7 +1,5 @@
 package com.ray.atten.desktop.utils;
 
-import org.springframework.stereotype.Component;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;

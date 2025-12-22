@@ -8,19 +8,39 @@
     /* 语义化变量 */
     -fx-bg-main: #1e1e1e;
     -fx-bg-content: #2d2d2d;
-    -fx-bg-sidebar: #000000;
+    -fx-bg-sidebar: #1c1c1c;
 
     /* 文字颜色：必须使用非常亮的颜色 */
-    -fx-text-main: #ecf0f1;      /* 主文字：几乎是白色 */
-    -fx-text-muted: #aaaaaa;     /* 辅助文字：淡灰色 */
+    -fx-text-main: #ecf0f1; /* 主文字：几乎是白色 */
+    -fx-text-muted: #aaaaaa; /* 辅助文字：淡灰色 */
     -fx-text-nav: #ffffff;
 
     /* 品牌色 */
-    -fx-accent: #bb86fc;         /* 选中的颜色 */
-    -fx-focus-color: #bb86fc;
+    -fx-accent: #334372; /* 选中的颜色 */
+    -fx-focus-color: #334372;
     -fx-accent-color: #0078d4; /* 系统强调色 */
     -fx-selection-bar: #3a3a3a; /* 默认选中栏背景（备用） */
+
+    -fx-nav-hover: #3d3d3d;
 }
+
+/* 统一所有 TableView 的行高 */
+.table-view .table-row-cell {
+    -fx-cell-size: 40px; /* 你可以根据需要调整这个数值，建议 35px - 45px */
+}
+
+/* 确保单元格内的内容垂直居中 */
+.table-view .table-cell {
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 10 0 10;
+}
+
+/* 如果行内有按钮，按钮的高度不能超过 cell-size */
+.table-view .table-cell .button {
+    -fx-padding: 3 10; /* 减小按钮内边距，防止撑开行高 */
+    -fx-font-size: 12px;
+}
+
 /* --- 全局文字修正 --- */
 .label, .text, .button, .table-cell {
     -fx-text-fill: -fx-text-main;
@@ -38,12 +58,21 @@
     -fx-background-color: transparent;
     -fx-text-fill: -fx-text-nav;
     -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0 0 25;
     -fx-cursor: hand;
-    -fx-padding: 0 0 0 20;
+    -fx-border-color: transparent; /* 预留边框位置，防止抖动 */
+    -fx-border-width: 0 0 0 4;
 }
 
 .nav-button:hover {
     -fx-background-color: -fx-nav-hover;
+}
+
+/* --- 核心：激活/选中状态样式 --- */
+.nav-button.active {
+    -fx-background-color: rgba(52, 152, 219, 0.15); /* 深色模式下用半透明蓝 */
+    -fx-text-fill: #5dade2;
+    -fx-border-color: #5dade2;
 }
 
 .content-area {
@@ -72,22 +101,6 @@
 
 .muted-label {
     -fx-text-fill: -fx-text-muted;
-}
-
-/* 深色模式下的操作按钮 - 建议用紫色或更明亮的青色 */
-.accent-button {
-    /* 使用稍亮一点的蓝色，确保在黑底上不沉闷 */
-    -fx-background-color: #0062cc;
-    -fx-text-fill: #ffffff;
-    -fx-font-size: 14px;
-    -fx-cursor: hand;
-    -fx-background-radius: 4;
-}
-.accent-button:hover {
-    -fx-background-color: #007bff; /* 悬停时变亮 */
-}
-.accent-button:pressed {
-    -fx-background-color: #0056b3;
 }
 
 /* 输入框在深色模式下变暗 */
@@ -124,7 +137,7 @@
 }
 
 .custom-tab-pane .tab:selected {
-    -fx-background-color: #4d4d4d;
+    -fx-background-color: #898989;
 }
 
 .custom-tab-pane .tab:selected .tab-label {
@@ -133,101 +146,31 @@
 
 /* 主题选择按钮深色样式 */
 .theme-toggle-button {
-    -fx-background-color: #3d3d3d;
-    -fx-text-fill: white;
-    -fx-border-color: #555555;
-    -fx-cursor: hand;
+    -fx-background-color: transparent;
+    -fx-border-color: #57606f;
+    -fx-border-radius: 5;
+    -fx-text-fill: #f1f2f6;
+}
+
+.theme-toggle-button:hover {
+    -fx-background-color: -fx-nav-hover;
+}
+
+.theme-toggle-button.active {
+    -fx-background-color: #22254b;
+    -fx-text-fill: #121212;
+    -fx-border-color: #22254b;
 }
 
 .setup-container {
     -fx-background-color: -fx-bg-main;
 }
 
-/* 表格整体边框 */
-.custom-table-view {
-    -fx-background-color: #2d2d2d;
-    -fx-border-color: #444444;
-}
-
-/* 表头样式 - 深色 */
-.custom-table-view .column-header {
-    -fx-background-color: #3d3d3d;
-    -fx-border-color: #444444;
-}
-
-.custom-table-view .column-header .label {
-    -fx-text-fill: #ecf0f1;
-    -fx-font-weight: bold;
-}
 /* --- 分隔线修正 --- */
 .separator .line {
     -fx-border-color: #444444;
 }
-/* 单元格样式 - 深色 */
-.custom-table-view .table-cell {
-    -fx-text-fill: #ecf0f1;
-    -fx-alignment: CENTER;
-}
-/* --- TableView 深度适配 --- */
-.table-view {
-    -fx-background-color: transparent;
-    -fx-border-color: #444444;
-    -fx-table-cell-border-color: #444444; /* 单元格边框颜色 */
-}
 
-/* 表头背景和文字 */
-.table-view .column-header, .table-view .column-header-background {
-    -fx-background-color: #333333;
-    -fx-border-color: #444444;
-}
-.table-view .column-header .label {
-    -fx-text-fill: #aaaaaa;
-    -fx-font-weight: bold;
-}
-/* 解决单元格背景问题 */
-.table-row-cell {
-    -fx-background-color: -fx-control-inner-background;
-    -fx-text-fill: -fx-text-main;
-}
-/* 偶数行变色，方便阅读 */
-.custom-table-view .table-row-cell:odd {
-    -fx-background-color: #353535;
-}
-
-.custom-table-view .table-row-cell:even {
-    -fx-background-color: #2d2d2d;
-}
-.table-row-cell:filled:selected {
-    /* 选中时的背景色：使用一个明显的深蓝色或紫色 */
-    -fx-background-color: #264f78;
-    -fx-table-cell-border-color: #0078d4; /* 选中行的边框稍微亮一点 */
-}
-/* 3. 选中行里的所有文字颜色强制设为白色，确保对比度 */
-.table-row-cell:filled:selected .table-cell {
-    -fx-text-fill: #ffffff !important;
-}
-
-/* 4. 当表格失去焦点但行仍被选中时 */
-.table-row-cell:filled:selected:focused {
-    -fx-background-color: #264f78; /* 保持一致或稍微变亮 */
-}
-/* 5. 鼠标滑过行时的反馈 */
-.table-row-cell:filled:hover {
-    -fx-background-color: #3e3e42;
-}
-/* --- 分页组件内部 TableView 修正 --- */
-/* 如果你的 TableView 是放在 Pagination 里的，确保它填满 */
-.pagination .table-view {
-    -fx-background-color: transparent;
-}
-/* 选中行高亮 */
-.custom-table-view .table-row-cell:selected {
-    -fx-background-color: -fx-accent; /* 使用之前定义的品牌色变量 */
-}
-
-.table-row-cell:selected .table-cell {
-    -fx-text-fill: black; /* 选中行时文字变黑，防止亮色背景看不清 */
-}
 
 .status-label-important {
     -fx-text-fill: #ff5252; /* 深色模式下用更亮的红色，防止看不清 */
@@ -237,14 +180,6 @@
 .bold-label {
     -fx-text-fill: -fx-text-main;
     -fx-font-weight: bold;
-}
-
-.normal-button {
-    -fx-background-color: #424242;
-    -fx-text-fill: #eeeeee;
-}
-.normal-button:hover {
-    -fx-background-color: #505050;
 }
 
 /* 图片边框 - 在深色背景下稍微亮一点点，勾勒出边框 */
@@ -266,10 +201,6 @@
     -fx-background-color: transparent;
 }
 
-.pin-highlight {
-    -fx-text-fill: #bb86fc; /* 深色模式下 PIN 码使用高亮品牌色，方便识别 */
-}
-
 /* 深色模式下的控制栏 */
 .camera-controls-bar {
     -fx-background-color: -fx-bg-content;
@@ -278,7 +209,7 @@
 /* 强调拍照按钮在深色模式下的亮度 */
 #btnCapture {
     -fx-background-color: -fx-accent;
-    -fx-text-fill: #000000;
+    -fx-text-fill: #1e1e1e;
     -fx-font-weight: bold;
     -fx-font-size: 15px;
 }
@@ -289,6 +220,7 @@
     -fx-text-fill: #ffd48a;
     -fx-border-color: #a67c00;
 }
+
 .action-btn-detail:hover {
     -fx-background-color: #a67c00;
 }
@@ -299,6 +231,7 @@
     -fx-text-fill: #8cdcfe;
     -fx-border-color: #00668a;
 }
+
 .action-btn-sync:hover {
     -fx-background-color: #00668a;
 }
@@ -308,6 +241,7 @@
     -fx-text-fill: #4caf50; /* 亮绿色 */
     -fx-font-weight: bold;
 }
+
 .status-inactive {
     -fx-text-fill: #f44336; /* 亮红色 */
 }
@@ -317,9 +251,11 @@
     -fx-background-color: #004b8d; /* 明显的深蓝色 */
     -fx-background-insets: 0;
 }
+
 .table-row-cell:filled:selected .table-cell {
     -fx-text-fill: white !important;
 }
+
 /* 针对 SyncGroupView.fxml 的根容器 */
 .main-content-pane {
     -fx-background-color: -fx-bg-main;
@@ -331,9 +267,371 @@
     -fx-border-color: #555555;
     -fx-text-fill: white;
 }
+
 .custom-combo-box .list-cell {
     -fx-text-fill: white;
     -fx-background-color: #333333;
+}
+
+/* 抽屉容器 */
+.side-drawer {
+    -fx-background-color: -fx-bg-content; /* 比主背景稍亮一点 */
+    -fx-border-color: #444444;
+    -fx-border-width: 0 0 0 1; /* 只有左侧有一条线 */
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.6), 20, 0, -5, 0); /* 向左的阴影 */
+}
+
+/* 抽屉头部 */
+.drawer-header {
+    -fx-background-color: #333333;
+    -fx-border-color: #444444;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* 关闭按钮 */
+.drawer-close-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: -fx-text-muted;
+    -fx-font-size: 18px;
+    -fx-cursor: hand;
+}
+
+.drawer-close-btn:hover {
+    -fx-text-fill: #ff4d4d;
+}
+
+/* 根容器背景 */
+.detail-root-pane {
+    -fx-background-color: #1e1e1e;
+}
+
+/* 图片外框 */
+.image-container-box {
+    -fx-border-color: #555555;
+    -fx-border-width: 1;
+    -fx-background-color: #1e1e1e;
+    -fx-padding: 8;
+}
+
+/* 侧边功能按钮 */
+.side-action-button {
+    -fx-background-color: #1e1e1e;
+    -fx-text-fill: white;
+    -fx-border-color: #333333;
+    -fx-font-size: 14px;
+    -fx-background-radius: 2;
+}
+
+.side-action-button:hover {
+    -fx-background-color: #333333;
+}
+
+/* 信息行条目 */
+.info-row {
+    -fx-background-color: #121212;
+    -fx-padding: 12;
+}
+
+/* 文字颜色 */
+.info-label {
+    -fx-text-fill: #888888;
+    -fx-font-size: 14px;
+}
+
+.value-label {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+}
+
+.time-font {
+    -fx-font-size: 13px;
+}
+
+/* 底部确定按钮 */
+.primary-confirm-button {
+    -fx-background-color: #0062cc;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 4;
+}
+
+/* 底部取消按钮 */
+.secondary-cancel-button {
+    -fx-background-color: #2a2a2a;
+    -fx-text-fill: #999999;
+    -fx-background-radius: 4;
+}
+
+/* 窗口底色 */
+.camera-window-bg {
+    -fx-background-color: #1e1e1e;
+}
+
+/* 预览框边框 */
+.camera-view-container {
+    -fx-border-color: #333333;
+    -fx-border-width: 1;
+    -fx-background-color: #0a0a0a;
+}
+
+/* 主按钮: 蓝色 */
+.camera-btn-primary {
+    -fx-background-color: #0062cc;
+    -fx-text-fill: white;
+    -fx-background-radius: 4;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+}
+
+.camera-btn-primary:hover {
+    -fx-background-color: #0075f0;
+}
+
+/* 次要按钮: 深灰线框 */
+.camera-btn-secondary {
+    -fx-background-color: #1a1a1a;
+    -fx-text-fill: #999999;
+    -fx-border-color: #333333;
+    -fx-background-radius: 4;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+}
+
+.camera-btn-secondary:hover {
+    -fx-background-color: #252525;
+}
+
+.field-value-box {
+    -fx-background-color: #121212; /* 深灰色背景 */
+    -fx-border-color: #333333;
+    -fx-padding: 8 15;
+    -fx-text-fill: white;
+}
+
+.action-button-dark {
+    -fx-background-color: #1a1a1a;
+    -fx-border-color: #444444;
+    -fx-text-fill: white;
+}
+
+.main-confirm-button {
+    -fx-background-color: #0066cc; /* 底部确定按钮的蓝色 */
+    -fx-text-fill: white;
+}
+
+/* --- 针对 custom-date-picker 的深色模式优化 --- */
+
+/* 1. 弹出层的整体背景 */
+.custom-date-picker .date-picker-popup,
+.custom-date-picker .date-picker-popup > .month-year-pane {
+    -fx-background-color: #333333; /* 深灰色背景 */
+}
+
+/* 2. 核心修复：让切换月份的箭头变白 */
+.custom-date-picker .date-picker-popup > .month-year-pane > .left-arrow-button > .left-arrow,
+.custom-date-picker .date-picker-popup > .month-year-pane > .right-arrow-button > .right-arrow {
+    -fx-background-color: white; /* 箭头填充色 */
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.4), 2, 0, 0, 0);
+}
+
+/* 3. 月份和年份的选择器（下拉箭头颜色和文字颜色） */
+.custom-date-picker .date-picker-popup > .month-year-pane .label {
+    -fx-text-fill: white;
+}
+
+/* 4. 日期格子区域 */
+.custom-date-picker .date-picker-popup > .calendar-grid {
+    -fx-background-color: #2b2b2b; /* 格子底色 */
+}
+
+/* 5. 日期数字的文字颜色 */
+.custom-date-picker .date-picker-popup > .calendar-grid > .day-cell {
+    -fx-text-fill: #cccccc;
+}
+
+/* 6. 悬停日期时的颜色 */
+.custom-date-picker .date-picker-popup > .calendar-grid > .day-cell:hover {
+    -fx-background-color: #444444;
+    -fx-text-fill: white;
+}
+
+/* 7. 选中日期的颜色 */
+.custom-date-picker .date-picker-popup > .calendar-grid > .day-cell:selected {
+    -fx-background-color: #0078D7; /* 经典蓝色选中态 */
+    -fx-text-fill: white;
+}
+
+/* 8. 非本月日期的颜色（降低对比度） */
+.custom-date-picker .date-picker-popup > .calendar-grid > .day-cell.previous-month,
+.custom-date-picker .date-picker-popup > .calendar-grid > .day-cell.next-month {
+    -fx-text-fill: #555555;
+}
+
+/* 9. 星期表头（一、二、三...）文字颜色 */
+.custom-date-picker .date-picker-popup > .calendar-grid > .week-number-cell,
+.custom-date-picker .date-picker-popup > .calendar-grid > .day-name-cell {
+    -fx-text-fill: #888888;
+}
+
+/* 深色模式下的操作按钮 - 建议用紫色或更明亮的青色 */
+.accent-button {
+    /* 使用稍亮一点的蓝色，确保在黑底上不沉闷 */
+    -fx-background-color: #0062cc;
+    -fx-text-fill: #ffffff;
+    -fx-cursor: hand;
+    -fx-background-radius: 4;
+}
+
+/* 确定同步按钮 */
+.accent-button:disabled {
+    -fx-opacity: 0.5;
+    -fx-background-color: #444444;
+}
+
+.accent-button:hover {
+    -fx-background-color: #007bff; /* 悬停时变亮 */
+}
+
+.accent-button:pressed {
+    -fx-background-color: #0056b3;
+}
+
+.normal-button {
+    -fx-background-color: #424242;
+    -fx-text-fill: #eeeeee;
+    -fx-cursor: hand;
+}
+
+.normal-button:hover {
+    -fx-background-color: #505050;
+}
+
+/* 退出按钮悬停时可以设置成柔和的红色提示 */
+.nav-button-exit:hover {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+}
+
+.nav-button-exit {
+    -fx-background-color: #2d2d2d;
+}
+
+/* 设备管理 */
+/* 操作按钮风格 */
+.btn-success {
+    -fx-background-color: #2ecc71;
+    -fx-text-fill: white;
+}
+
+.btn-success:hover {
+    -fx-background-color: #27ae60;
+}
+
+.btn-info {
+    -fx-background-color: #3498db;
+    -fx-text-fill: white;
+}
+
+.btn-info:hover {
+    -fx-background-color: #2980b9;
+}
+
+.form-input {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: #888888;
+}
+
+/* --- TableView 深度适配 --- */
+.table-view {
+    -fx-background-color: transparent;
+    -fx-border-color: #444444;
+    -fx-table-cell-border-color: #444444; /* 单元格边框颜色 */
+}
+
+/* 表头背景和文字 */
+.table-view .column-header, .table-view .column-header-background {
+    -fx-background-color: #333333;
+    -fx-border-color: #444444;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: #aaaaaa;
+    -fx-font-weight: bold;
+}
+
+/* 解决单元格背景问题 */
+.table-row-cell {
+    -fx-background-color: -fx-control-inner-background;
+    -fx-text-fill: -fx-text-main;
+}
+
+/* 表格整体边框 */
+.custom-table-view {
+    -fx-background-color: #2d2d2d;
+    -fx-border-color: #444444;
+}
+
+/* 表头样式 - 深色 */
+.custom-table-view .column-header {
+    -fx-background-color: #3d3d3d;
+    -fx-border-color: #444444;
+}
+
+.custom-table-view .column-header .label {
+    -fx-text-fill: #ecf0f1;
+    -fx-font-weight: bold;
+}
+
+/* 单元格样式 - 深色 */
+.custom-table-view .table-cell {
+    -fx-text-fill: #ecf0f1;
+    -fx-alignment: CENTER;
+}
+
+/* 偶数行变色，方便阅读 */
+.custom-table-view .table-row-cell:odd {
+    -fx-background-color: #6f6f6f;
+}
+
+.custom-table-view .table-row-cell:even {
+    -fx-background-color: #2d2d2d;
+}
+
+.table-row-cell:filled:selected {
+    /* 选中时的背景色：使用一个明显的深蓝色或紫色 */
+    -fx-background-color: #264f78;
+    -fx-table-cell-border-color: #0078d4; /* 选中行的边框稍微亮一点 */
+}
+
+/* 3. 选中行里的所有文字颜色强制设为白色，确保对比度 */
+.table-row-cell:filled:selected .table-cell {
+    -fx-text-fill: #ffffff !important;
+}
+
+/* 4. 当表格失去焦点但行仍被选中时 */
+.table-row-cell:filled:selected:focused {
+    -fx-background-color: #264f78; /* 保持一致或稍微变亮 */
+}
+
+/* 5. 鼠标滑过行时的反馈 */
+.table-row-cell:filled:hover {
+    -fx-background-color: #3e3e42;
+}
+
+/* --- 分页组件内部 TableView 修正 --- */
+/* 如果你的 TableView 是放在 Pagination 里的，确保它填满 */
+.pagination .table-view {
+    -fx-background-color: transparent;
+}
+
+/* 选中行高亮 */
+.custom-table-view .table-row-cell:selected {
+    -fx-background-color: -fx-accent; /* 使用之前定义的品牌色变量 */
+}
+
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: black; /* 选中行时文字变黑，防止亮色背景看不清 */
 }
 
 /* 针对 TableView 里的状态显示（如果有的话） */
@@ -342,8 +640,68 @@
     -fx-control-inner-background: #2b2b2b; /* 单元格背景 */
 }
 
-/* 确定同步按钮 */
-.accent-button:disabled {
-    -fx-opacity: 0.5;
-    -fx-background-color: #444444;
+/* 确保表格内的 Label 不会撑开行高 */
+.table-view .table-cell .label {
+    -fx-padding: 0;
+    -fx-font-size: 13px;
+}
+
+/* Loading 遮罩层背景 */
+.loading-mask {
+    -fx-background-color: rgba(0, 0, 0, 0.4); /* 半透明黑 */
+}
+
+/* Loading 白色对话框 */
+.loading-box {
+    -fx-background-color: -fx-base-bg;
+    -fx-background-radius: 12;
+    -fx-padding: 30;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 15, 0, 0, 0);
+}
+
+/* 自定义进度条颜色 */
+.loading-box .progress-indicator {
+    -fx-progress-color: #3498db; /* 你的主色调 */
+}
+
+/* 为 Logo 图片添加简单的圆角或光泽（如果是圆形 Logo） */
+.sidebar ImageView {
+    /* 如果你的 Logo 本身不是圆的，可以尝试在这里加阴影 */
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);
+}
+
+/* 标题文字样式 */
+.sidebar-title {
+    -fx-text-fill: #ecf0f1;
+    -fx-font-family: "Microsoft YaHei", "Segoe UI";
+}
+
+/* 分隔线透明度调低，不要抢戏 */
+.separator {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 关于页面样式 - 深色模式 */
+.about-title-label {
+    -fx-text-fill: #ecf0f1; /* 近乎白色 */
+    -fx-font-weight: bold;
+    -fx-font-size: 18px;
+}
+
+.about-content-text {
+    -fx-fill: #bdc3c7; /* 浅灰色，比标题暗一点，增加视觉层级 */
+}
+
+.about-info-label {
+    -fx-text-fill: #95a5a6; /* 灰青色 */
+}
+
+.about-copyright-label {
+    -fx-text-fill: #7f8c8d; /* 深灰色 */
+}
+
+.about-disclaimer-text {
+    -fx-fill: #7f8c8d; /* 深色模式下降低对比度 */
+    -fx-font-size: 13px;
+    -fx-font-style: italic;
 }

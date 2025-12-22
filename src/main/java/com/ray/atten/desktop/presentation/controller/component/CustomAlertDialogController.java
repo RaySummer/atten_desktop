@@ -1,75 +1,103 @@
 package com.ray.atten.desktop.presentation.controller.component;
 
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import lombok.var;
 import org.springframework.stereotype.Component;
+
+import java.util.Objects;
 
 @Component
 public class CustomAlertDialogController {
 
-    @FXML
-    private ImageView iconImageView;
-    @FXML
-    private Label messageLabel;
-    @FXML
-    private Button confirmButton;
-    @FXML
-    private Button cancelButton;
-    @FXML
-    private HBox buttonBox;
+    @FXML private VBox dialogRoot;
+    @FXML private ImageView iconImageView;
+    @FXML private Label messageLabel;
+    @FXML private Button confirmButton;
+    @FXML private Button cancelButton;
+    @FXML private HBox buttonBox;
 
     private boolean confirmed = false;
     private Stage dialogStage;
 
+    // 拖拽窗口用的坐标偏移
+    private double xOffset = 0;
+    private double yOffset = 0;
+
     public void setDialogStage(Stage dialogStage) {
         this.dialogStage = dialogStage;
+        setupDragEvents();
+    }
+
+    /**
+     * 实现无边框窗口的拖拽功能
+     */
+    private void setupDragEvents() {
+        dialogRoot.setOnMousePressed(event -> {
+            xOffset = event.getSceneX();
+            yOffset = event.getSceneY();
+        });
+
+        dialogRoot.setOnMouseDragged(event -> {
+            if (dialogStage != null) {
+                dialogStage.setX(event.getScreenX() - xOffset);
+                dialogStage.setY(event.getScreenY() - yOffset);
+            }
+        });
     }
 
     /**
      * 初始化彈窗內容和類型
      *
      * @param message    顯示的消息
-     * @param type       彈窗類型 (e.g., "INFO", "WARNING", "CONFIRM")
+     * @param type       彈窗類型 (INFO, WARNING, ERROR, CONFIRM)
      * @param showCancel 是否顯示取消按鈕
      */
     public void initialize(String message, String type, boolean showCancel) {
         messageLabel.setText(message);
         cancelButton.setVisible(showCancel);
-        cancelButton.setManaged(showCancel); // 隱藏時不佔用空間
+        cancelButton.setManaged(showCancel); // 隱藏時不佔用佈局空間
 
-        // 【核心邏輯】：如果沒有取消按鈕，讓整個 HBox 居右
-        if (!showCancel) {
-            buttonBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
-        } else {
-            // 如果有取消按鈕，維持默認的對齊方式
-            buttonBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT); // 保持原樣，但在 FXML 中確保對齊
-        }
+        // 统一对齐逻辑
+        buttonBox.setAlignment(Pos.CENTER_RIGHT);
 
-        // 根據類型設置圖標 (假設您在 /images/ 中準備了 info.png, warning.png, confirm.png)
-        String iconPath = "/images/" + type.toLowerCase() + ".png";
+        // 設置圖標逻辑优化
+        String iconFileName = type.toLowerCase() + ".png";
+        String iconPath = "/images/" + iconFileName;
         try {
-            iconImageView.setImage(new Image(getClass().getResourceAsStream(iconPath)));
+            // 使用更健壮的资源读取方式
+            var resource = getClass().getResource(iconPath);
+            if (resource != null) {
+                iconImageView.setImage(new Image(resource.toExternalForm()));
+            } else {
+                System.err.println("找不到图标资源: " + iconPath);
+            }
         } catch (Exception e) {
-            System.err.println("Icon not found for type: " + type);
-            // 可以設置一個默認圖標
+            System.err.println("加载图标失败: " + type + ", 错误: " + e.getMessage());
         }
     }
 
     @FXML
     private void handleConfirm() {
         confirmed = true;
-        dialogStage.close();
+        if (dialogStage != null) {
+            dialogStage.close();
+        }
     }
 
     @FXML
     private void handleCancel() {
         confirmed = false;
-        dialogStage.close();
+        if (dialogStage != null) {
+            dialogStage.close();
+        }
     }
 
     public boolean isConfirmed() {

@@ -1,44 +1,59 @@
-/* dialog.css */
-
-/* --- 彈窗根容器樣式 --- */
+/* 基础布局样式 */
 .dialog-root {
-    /* 設置背景色、邊框和圓角 */
-    -fx-background-color: #f7f7f7;
-    -fx-border-color: #bbbbbb;
+    -fx-background-color: -fx-bg-color;
+    -fx-background-radius: 12px;
+    -fx-border-radius: 12px;
+    -fx-border-color: -fx-border-color;
     -fx-border-width: 1px;
-    -fx-background-radius: 5px;
-    -fx-border-radius: 5px;
+    /* 增加悬浮阴影感 */
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.4), 15, 0, 0, 0);
 }
 
-/* --- 通用按鈕樣式 --- */
-.dialog-button {
-    -fx-background-color: #e0e0e0;
-    -fx-text-fill: #333333;
-    -fx-border-color: #cccccc;
-    -fx-border-radius: 3px;
-    -fx-background-radius: 3px;
+/* 亮色模式变量 */
+.light-mode {
+    -fx-bg-color: #ffffff;
+    -fx-border-color: #ffffff;
+    -fx-text-main: #2f3640;
+}
+
+/* 深色模式变量 */
+.dark-mode {
+    -fx-bg-color: #2f3542;
+    -fx-border-color: #2f3542;
+    -fx-text-main: #f1f2f6;
+}
+
+/* 文字颜色 */
+.dialog-message {
+    -fx-text-fill: -fx-text-main;
+    -fx-font-size: 15px;
     -fx-font-weight: bold;
-    -fx-padding: 5 15 5 15;
 }
 
-.dialog-button:hover {
-    -fx-background-color: #d0d0d0;
+/* 按钮通用样式 */
+.button {
+    -fx-cursor: hand;
+    -fx-background-radius: 6;
+    -fx-font-weight: bold;
+    -fx-transition: all 0.3s;
 }
 
-/* --- 確定按鈕 (突出顯示) --- */
-.confirm-button {
-    -fx-background-color: #0078d4; /* 藍色 */
+/* 确定按钮 - 蓝色风格 */
+.btn-primary {
+    -fx-background-color: #3498db;
     -fx-text-fill: white;
-    -fx-border-color: #0078d4;
+}
+.btn-primary:hover {
+    -fx-background-color: #2980b9;
 }
 
-.confirm-button:hover {
-    -fx-background-color: #005bb5; /* 藍色更深 */
+/* 取消按钮 - 幽灵按钮风格 */
+.btn-secondary {
+    -fx-background-color: transparent;
+    -fx-border-color: #95a5a6;
+    -fx-border-radius: 6;
+    -fx-text-fill: -fx-text-main;
 }
-
-/* --- 取消按鈕 (可選，通常是中性色) --- */
-.cancel-button {
-    -fx-background-color: #ffffff;
-    -fx-text-fill: #333333;
-    -fx-border-color: #aaaaaa;
+.btn-secondary:hover {
+    -fx-background-color: rgba(149, 165, 166, 0.2);
 }

@@ -99,7 +99,7 @@ public class ServerSetupController {
                         AppConstants.updateApiBaseUrl(protocol, host, portText);
 
                         // 2. 写入磁盘（进阶建议的部分，现在补全）
-                        ConfigRepo.saveConfig(protocol, host, portText, null);
+                        ConfigRepo.saveConfig(protocol, host, portText, "dark");
 
                         // 3. 跳转
                         Platform.runLater(new Runnable() {

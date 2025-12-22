@@ -10,35 +10,40 @@
       fx:controller="com.ray.atten.desktop.presentation.controller.SyncGroupController"
       fx:id="rootPane"
       prefHeight="400.0" prefWidth="700.0"
-      styleClass="main-content-pane"> <padding>
-    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
-</padding>
-
-    <Label text="待同步員工列表:" styleClass="header-label"/>
-
-    <TableView fx:id="employeeTableView" prefHeight="300.0" VBox.vgrow="ALWAYS" styleClass="custom-table-view">
-        <columns>
-            <TableColumn fx:id="rowNumberColumn" text="序號" prefWidth="50"/>
-            <TableColumn fx:id="pinColumn" text="PIN" prefWidth="80"/>
-            <TableColumn fx:id="nameColumn" text="姓名" prefWidth="100"/>
-            <TableColumn fx:id="entryDateColumn" text="入职时间" prefWidth="120"/>
-            <TableColumn fx:id="fingerprintColumn" text="指紋" prefWidth="60"/>
-            <TableColumn fx:id="photoBase64Column" text="照片" prefWidth="60"/>
-            <TableColumn fx:id="actionColumn" text="操作" prefWidth="100"/>
-        </columns>
-        <columnResizePolicy>
-            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-        </columnResizePolicy>
-    </TableView>
+      styleClass="main-content-pane">
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
+    </padding>
 
     <HBox alignment="CENTER_LEFT" spacing="10.0">
         <padding>
-            <Insets top="15.0" />
+            <Insets top="15.0"/>
         </padding>
-        <Label text="選擇目標考勤組:" styleClass="normal-label"/>
-        <ComboBox fx:id="groupComboBox" prefWidth="250.0" promptText="請選擇一個考勤組" styleClass="custom-combo-box"/>
+        <Label text="选择目标设备组:" styleClass="normal-label"/>
+        <ComboBox fx:id="groupComboBox" prefWidth="250.0" promptText="请选择一个设备组" styleClass="custom-combo-box"/>
         <HBox HBox.hgrow="ALWAYS" alignment="CENTER_RIGHT">
-            <Button fx:id="confirmButton" text="確定同步" onAction="#handleConfirmSync" disable="true" styleClass="accent-button"/>
+            <Button fx:id="confirmButton" text="确定同步" onAction="#handleConfirmSync" disable="true"
+                    styleClass="accent-button"/>
         </HBox>
     </HBox>
+    <HBox alignment="CENTER_LEFT">
+        <padding>
+            <Insets top="15.0"/>
+        </padding>
+        <TableView fx:id="employeeTableView" prefHeight="300.0" VBox.vgrow="ALWAYS" styleClass="custom-table-view">
+            <columns>
+                <TableColumn fx:id="rowNumberColumn" text="序号" prefWidth="50"/>
+                <TableColumn fx:id="pinColumn" text="工号" prefWidth="80"/>
+                <TableColumn fx:id="nameColumn" text="姓名" prefWidth="100"/>
+                <TableColumn fx:id="entryDateColumn" text="入职时间" prefWidth="150"/>
+                <TableColumn fx:id="fingerprintColumn" text="指纹" prefWidth="60"/>
+                <TableColumn fx:id="photoBase64Column" text="照片" prefWidth="60"/>
+                <TableColumn fx:id="actionColumn" text="操作" prefWidth="80"/>
+            </columns>
+            <columnResizePolicy>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+            </columnResizePolicy>
+        </TableView>
+    </HBox>
+
 </VBox>

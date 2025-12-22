@@ -1,41 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 
-<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+<VBox fx:id="rootVBox" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.ray.atten.desktop.presentation.controller.CameraPreviewController"
-      prefHeight="750.0" prefWidth="500.0" alignment="TOP_CENTER"
-      styleClass="main-content-pane"> <children>
-    <StackPane fx:id="previewStackPane" prefHeight="700.0" prefWidth="500.0" styleClass="camera-preview-container">
-        <children>
-            <ImageView fx:id="videoImageView" fitHeight="640.0" fitWidth="480.0" preserveRatio="true" />
-        </children>
-    </StackPane>
+      prefHeight="600.0" prefWidth="750.0" spacing="0"
+      style="-fx-background-color: #1a1a1a; -fx-border-color: #444444; -fx-border-width: 1;">
+    <padding>
+        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+    </padding>
+    <children>
+        <StackPane fx:id="previewStackPane" VBox.vgrow="ALWAYS" style="-fx-background-color: #000000;">
+            <children>
+                <ImageView fx:id="videoImageView" fitHeight="500.0" fitWidth="730.0" pickOnBounds="true"
+                           preserveRatio="true"/>
 
-    <HBox alignment="CENTER" prefHeight="50.0" prefWidth="500.0" styleClass="camera-controls-bar">
-        <children>
-            <StackPane HBox.hgrow="ALWAYS" alignment="CENTER_RIGHT" >
-                <children>
-                    <Button fx:id="btnCapture" text="拍照" minWidth="120.0" onAction="#handleCapture" styleClass="accent-button" />
-                    <Button fx:id="btnRetake" text="重拍" minWidth="120.0" onAction="#handleRetake" visible="false" styleClass="normal-button" />
-                </children>
-            </StackPane>
+                <Pane fx:id="cropContainer" visible="false"/>
 
-            <StackPane HBox.hgrow="ALWAYS" alignment="CENTER" >
-                <children>
-                    <Button fx:id="btnConfirm" text="确定" minWidth="120.0" onAction="#handleConfirm" visible="false" styleClass="accent-button" />
-                </children>
-            </StackPane>
+                <Region fx:id="flashPane" style="-fx-background-color: white;" opacity="0.0" mouseTransparent="true"/>
+            </children>
+        </StackPane>
 
-            <StackPane HBox.hgrow="ALWAYS" alignment="CENTER_LEFT" >
-                <children>
-                    <Button fx:id="btnCancel" text="取消" minWidth="120.0" onAction="#handleCancel" styleClass="normal-button" />
-                </children>
-            </StackPane>
-        </children>
-    </HBox>
-</children>
+        <HBox spacing="15.0" alignment="CENTER_RIGHT" prefHeight="70.0">
+            <padding>
+                <Insets right="15.0"/>
+            </padding>
+            <children>
+                <Button fx:id="btnCancel" text="取消" onAction="#handleCancel" prefWidth="130.0" prefHeight="38.0"
+                        style="-fx-background-color: #1a73e8; -fx-text-fill: white;"/>
+                <Button fx:id="btnCapture" text="📷 执行拍照" onAction="#handleCapture" prefWidth="130.0" prefHeight="38.0"
+                        style="-fx-background-color: #ffffff; -fx-text-fill: #333333; -fx-font-weight: bold;"/>
+                <Button fx:id="btnRetake" text="重拍" onAction="#handleRetake" visible="false" managed="false"
+                        prefWidth="130.0" prefHeight="38.0"
+                        style="-fx-background-color: #444444; -fx-text-fill: white;"/>
+                <Button fx:id="btnConfirm" text="确定并使用" onAction="#handleConfirm" visible="false" managed="false"
+                        prefWidth="130.0" prefHeight="38.0"
+                        style="-fx-background-color: #ffffff; -fx-text-fill: #333333; -fx-font-weight: bold;"/>
+            </children>
+        </HBox>
+    </children>
 </VBox>
