@@ -9,22 +9,15 @@
     <version>1.0.0</version>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <javacpp.platform>windows-x86_64</javacpp.platform>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <javafx.version>17.0.2</javafx.version>
         <spring.version>5.3.23</spring.version>
-        <commons.version>3.12.0</commons.version>
-        <httpclient.version>4.5.13</httpclient.version>
-        <httpcore.version>4.4.13</httpcore.version>
-        <jackson.version>2.12.3</jackson.version>
+        <jackson.version>2.17.0</jackson.version>
         <lombok.version>1.18.24</lombok.version>
-        <jackson-databind.version>2.17.0</jackson-databind.version>
-        <jackson-datatype-jsr310.version>2.17.0</jackson-datatype-jsr310.version>
-        <webcam-capture.version>0.3.12</webcam-capture.version>
-        <slf4j-simple.version>1.7.36</slf4j-simple.version>
-        <pixelator.version>1.0.0</pixelator.version>
     </properties>
 
     <dependencies>
@@ -60,17 +53,12 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>${httpclient.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpcore</artifactId>
-            <version>${httpcore.version}</version>
+            <version>4.5.13</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson-databind.version}</version>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -80,7 +68,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>${commons.version}</version>
+            <version>3.12.0</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -91,26 +79,43 @@
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>${jackson-datatype-jsr310.version}</version>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.sarxos</groupId>
             <artifactId>webcam-capture</artifactId>
-            <version>${webcam-capture.version}</version>
+            <version>0.3.12</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas-platform</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv-platform</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>${slf4j-simple.version}</version>
+            <version>1.7.36</version>
         </dependency>
-
         <dependency>
             <groupId>io.github.jakepalanca</groupId>
             <artifactId>image-pixelator</artifactId>
-            <version>${pixelator.version}</version>
+            <version>1.0.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas-platform</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv-platform</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -123,22 +128,38 @@
                     <include>**/*.png</include>
                     <include>**/*.jpg</include>
                     <include>**/*.css</include>
-                    <include>lib/*.jar</include>
                     <include>lib/*.dll</include>
                 </includes>
                 <filtering>false</filtering>
             </resource>
         </resources>
-
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>17</source>
+                    <target>17</target>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/libs</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
@@ -154,20 +175,12 @@
                         <configuration>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>shaded</shadedClassifierName>
-                            <includeSystemScope>true</includeSystemScope>
-
-                            <artifactSet>
-                                <includes>
-                                    <include>*:*</include>
-                                </includes>
-                            </artifactSet>
-
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.ray.atten.desktop.AppLauncher</mainClass>
                                 </transformer>
                             </transformers>
-
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
@@ -175,6 +188,24 @@
                                         <exclude>META-INF/*.SF</exclude>
                                         <exclude>META-INF/*.DSA</exclude>
                                         <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>org/bytedeco/javacpp/android*/**</exclude>
+                                        <exclude>org/bytedeco/javacpp/linux*/**</exclude>
+                                        <exclude>org/bytedeco/javacpp/macosx*/**</exclude>
+                                        <exclude>org/bytedeco/javacpp/ios*/**</exclude>
+                                        <exclude>org/bytedeco/javacpp/freebsd*/**</exclude>
+                                        <exclude>org/bytedeco/opencv/android*/**</exclude>
+                                        <exclude>org/bytedeco/opencv/linux*/**</exclude>
+                                        <exclude>org/bytedeco/opencv/macosx*/**</exclude>
+                                        <exclude>org/bytedeco/opencv/ios*/**</exclude>
+                                        <exclude>**/lib/**/linux*/**</exclude>
+                                        <exclude>**/lib/**/macosx*/**</exclude>
+                                        <exclude>**/lib/**/android*/**</exclude>
+                                        <exclude>org/bytedeco/openblas/linux*/**</exclude>
+                                        <exclude>org/bytedeco/openblas/macosx*/**</exclude>
+                                        <exclude>org/bytedeco/openblas/android*/**</exclude>
+                                        <exclude>org/bytedeco/openblas/ios*/**</exclude>
+
+                                        <exclude>org/bytedeco/openblas/windows*/**</exclude>
                                     </excludes>
                                 </filter>
                             </filters>
@@ -191,26 +222,52 @@
                     <name>AttenDesktop</name>
                     <vendor>Ray Technology</vendor>
                     <appVersion>${project.version}</appVersion>
-                    <destination>${project.build.directory}/jpackage-output</destination>
+                    <destination>${project.build.directory}/dist</destination>
                     <input>${project.build.directory}</input>
+                    <mainJar>${project.build.finalName}.jar</mainJar>
                     <mainClass>com.ray.atten.desktop.AppLauncher</mainClass>
-                    <mainJar>atten_desktop-${project.version}-shaded.jar</mainJar>
                     <installerType>exe</installerType>
                     <icon>src/main/resources/images/logo_ray.ico</icon>
+
                     <winShortcut>true</winShortcut>
                     <winMenu>true</winMenu>
-                    <resourceDir>src/main/resources/lib</resourceDir>
+
+                    <runtimeImage>${project.basedir}/custom-runtime</runtimeImage>
+
                     <javaOptions>
-                        <option>--add-opens=java.xml.crypto/com.sun.org.slf4j.internal=ALL-UNNAMED</option>
-                        <option>--add-opens=java.base/sun.nio.ch=ALL-UNNAMED</option>
+                        <option>-Dfile.encoding=UTF-8</option>
+                        <option>--add-opens=java.base/java.lang=ALL-UNNAMED</option>
+                        <option>--add-opens=java.base/java.util=ALL-UNNAMED</option>
+                        <option>--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</option>
+                        <option>--add-opens=java.base/java.text=ALL-UNNAMED</option>
+                        <option>--add-opens=java.desktop/com.sun.javafx.scene=ALL-UNNAMED</option>
+                        <option>--add-opens=java.base/java.math=ALL-UNNAMED</option>
                     </javaOptions>
                 </configuration>
                 <executions>
                     <execution>
-                        <id>make-installer</id>
                         <phase>package</phase>
                         <goals>
                             <goal>jpackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}/jpackage-input"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                      tofile="${project.build.directory}/jpackage-input/${project.build.finalName}.jar"/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
                         </goals>
                     </execution>
                 </executions>

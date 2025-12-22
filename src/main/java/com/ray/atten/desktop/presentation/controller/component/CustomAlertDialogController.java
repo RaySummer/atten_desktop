@@ -9,20 +9,23 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import lombok.var;
 import org.springframework.stereotype.Component;
-
-import java.util.Objects;
 
 @Component
 public class CustomAlertDialogController {
 
-    @FXML private VBox dialogRoot;
-    @FXML private ImageView iconImageView;
-    @FXML private Label messageLabel;
-    @FXML private Button confirmButton;
-    @FXML private Button cancelButton;
-    @FXML private HBox buttonBox;
+    @FXML
+    private VBox dialogRoot;
+    @FXML
+    private ImageView iconImageView;
+    @FXML
+    private Label messageLabel;
+    @FXML
+    private Button confirmButton;
+    @FXML
+    private Button cancelButton;
+    @FXML
+    private HBox buttonBox;
 
     private boolean confirmed = false;
     private Stage dialogStage;
