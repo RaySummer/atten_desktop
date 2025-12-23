@@ -5,12 +5,26 @@ import org.apache.http.Consts;
 import java.nio.charset.Charset;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Properties;
 
 /**
  * 應用程序中所有全局、靜態的常量定義。
  * 包括 API 地址、HTTP 相關配置、字符集等。
  */
 public class AppConstants {
+    // 客户端版本 需与 pom.xml 保持一致
+    public static String CURRENT_VERSION;
+
+    static {
+        try {
+            Properties props = new Properties();
+            props.load(AppConstants.class.getResourceAsStream("/version.properties"));
+            CURRENT_VERSION = props.getProperty("app.version");
+        } catch (Exception e) {
+            CURRENT_VERSION = "1.0.0"; // 兜底
+        }
+    }
+
     /**
      * Atten Middle 服務的基礎 URL。
      * 建議未來從外部配置 (如 properties/YAML) 中讀取。
@@ -127,6 +141,13 @@ public class AppConstants {
      */
     public static String getAddOrUpdateDeviceAPI() {
         return API_BASE_URL + "/api/management/devices";
+    }
+
+    /**
+     * 检查客户端是否有新版本
+     */
+    public static String getApiVersionCheck(String currentVersion) {
+        return API_BASE_URL + "/api/version/check?currentVersion=" + currentVersion;
     }
 
 

@@ -41,10 +41,6 @@ public class ServerSetupController {
 
     @FXML
     public void initialize() {
-//        protocolCombo.setItems(FXCollections.observableArrayList("http://", "https://"));
-//        protocolCombo.getSelectionModel().select(0);
-//        portField.setText("8821"); // 默认值
-
         protocolCombo.getItems().addAll("http://", "https://");
         protocolCombo.getSelectionModel().select(0);
         portField.setText("80");
@@ -90,10 +86,6 @@ public class ServerSetupController {
                 Boolean success = checkTask.getValue();
                 if (success != null && success) {
 //                    // 更新全局常量
-//                    AppConstants.updateApiBaseUrl(protocol, host, portText);
-//                    statusLabel.setText("连接成功！");
-//                    switchToMain();
-                    // 在 ServerSetupController.java 的 onConnect 成功回调中：
                     if (checkTask.getValue()) {
                         // 1. 更新内存
                         AppConstants.updateApiBaseUrl(protocol, host, portText);

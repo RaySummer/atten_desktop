@@ -8,6 +8,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.Window;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -26,37 +27,59 @@ public class CustomAlertDialog {
             CustomAlertDialogController controller = loader.getController();
 
             Stage dialogStage = new Stage();
+
+            // --- 核心优化：寻找父窗口并设置居中 ---
+            // 自动寻找当前已显示的主窗口
+            Window owner = Window.getWindows().stream()
+                    .filter(Window::isShowing)
+                    .findFirst()
+                    .orElse(null);
+
+            if (owner != null) {
+                dialogStage.initOwner(owner);
+            }
+
             if (StringUtils.isNotEmpty(title)) {
                 dialogStage.setTitle(title);
             }
 
-            // 设置模态：必须处理完弹窗才能操作主界面
             dialogStage.initModality(Modality.APPLICATION_MODAL);
-            // 隐藏操作系统标题栏
             dialogStage.initStyle(StageStyle.TRANSPARENT);
             dialogStage.setResizable(false);
 
             Scene scene = new Scene(root);
-            // 关键：Scene 背景设为透明，否则 CSS 的圆角外会有黑色背景
             scene.setFill(Color.TRANSPARENT);
 
             // --- 动态应用主题 ---
-            String theme = ConfigRepo.getTheme(); // "dark" 或 "light"
+            String theme = ConfigRepo.getTheme();
             if ("dark".equalsIgnoreCase(theme)) {
                 root.getStyleClass().add("dark-mode");
             } else {
                 root.getStyleClass().add("light-mode");
             }
 
-            // 加载 CSS
             String cssPath = CustomAlertDialog.class.getResource("/css/dialog.css").toExternalForm();
             scene.getStylesheets().add(cssPath);
 
             dialogStage.setScene(scene);
 
-            // 先设置 Stage 再初始化拖拽逻辑
+            // 设置 Stage 和初始化数据
             controller.setDialogStage(dialogStage);
             controller.initialize(message, type.toString(), showCancel);
+
+            // --- 核心优化：计算位置居中 ---
+            // 必须在 setScene 之后，但在 show 之前或 Shown 事件中处理
+            if (owner != null) {
+                // 使用 setOnShown 确保在窗口尺寸计算完成后再定位
+                dialogStage.setOnShown(event -> {
+                    double x = owner.getX() + (owner.getWidth() - dialogStage.getWidth()) / 2;
+                    double y = owner.getY() + (owner.getHeight() - dialogStage.getHeight()) / 2;
+                    dialogStage.setX(x);
+                    dialogStage.setY(y);
+                });
+            } else {
+                dialogStage.centerOnScreen();
+            }
 
             dialogStage.showAndWait();
 
@@ -64,13 +87,14 @@ public class CustomAlertDialog {
 
         } catch (IOException e) {
             e.printStackTrace();
-            // 回退到原生 Alert
             javafx.scene.control.Alert fallback = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
             fallback.setContentText("自定義彈窗加載失敗: " + e.getMessage());
             fallback.showAndWait();
             return false;
         }
     }
+
+    // ... 其他 showWarning, showError, showInfo, showConfirmation 方法保持不变 ...
 
     public static void showWarning(String title, String message) {
         showDialog(title, message, Type.WARNING, false);

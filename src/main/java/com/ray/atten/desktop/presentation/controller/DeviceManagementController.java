@@ -195,7 +195,7 @@ public class DeviceManagementController {
                     setGraphic(null);
                 } else {
                     setText(item ? "已激活" : "未激活");
-                    setStyle(item ? "-fx-text-fill: #2ecc71;" : "-fx-text-fill: #ea7070;");
+                    setStyle(item ? "-fx-text-fill: #2ecc71;" : "-fx-text-fill: #ff3333;");
                 }
             }
         });

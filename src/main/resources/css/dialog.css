@@ -28,6 +28,7 @@
     -fx-text-fill: -fx-text-main;
     -fx-font-size: 15px;
     -fx-font-weight: bold;
+    -fx-alignment: CENTER_LEFT;
 }
 
 /* 按钮通用样式 */
@@ -42,6 +43,7 @@
 .btn-primary {
     -fx-background-color: #3498db;
     -fx-text-fill: white;
+    -fx-cursor: hand;
 }
 .btn-primary:hover {
     -fx-background-color: #2980b9;
@@ -53,7 +55,28 @@
     -fx-border-color: #95a5a6;
     -fx-border-radius: 6;
     -fx-text-fill: -fx-text-main;
+    -fx-cursor: hand;
 }
 .btn-secondary:hover {
     -fx-background-color: rgba(149, 165, 166, 0.2);
+}
+
+.dialog-icon {
+    /* 可以在这里微调图片偏移 */
+}
+
+/* 图片容器：处理圆角的同时增加立体感 */
+.icon-container {
+    -fx-background-color: white;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-border-color: #f0f0f0;
+    -fx-border-width: 1;
+    /* 柔和的阴影 */
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 10, 0, 0, 4);
+}
+
+/* 底部按钮区域的间距调整 */
+.button-box {
+    -fx-padding: 10 0 0 0;
 }

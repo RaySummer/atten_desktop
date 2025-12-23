@@ -7,6 +7,7 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,8 @@ public class CustomAlertDialogController {
     private Button cancelButton;
     @FXML
     private HBox buttonBox;
+    @FXML
+    private StackPane iconContainer; // 注入容器
 
     private boolean confirmed = false;
     private Stage dialogStage;
@@ -71,19 +74,31 @@ public class CustomAlertDialogController {
         // 统一对齐逻辑
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
 
-        // 設置圖標逻辑优化
-        String iconFileName = type.toLowerCase() + ".png";
-        String iconPath = "/images/" + iconFileName;
+        // 1. 设置图片路径逻辑 (保持你之前的)
+        String iconPath = "/images/" + type.toLowerCase() + ".png";
         try {
-            // 使用更健壮的资源读取方式
             var resource = getClass().getResource(iconPath);
             if (resource != null) {
-                iconImageView.setImage(new Image(resource.toExternalForm()));
-            } else {
-                System.err.println("找不到图标资源: " + iconPath);
+                Image img = new Image(resource.toExternalForm());
+                iconImageView.setImage(img);
+
+                // 2. 【核心修复】创建裁剪区域防止尖角突出
+                // 创建一个和图片一样大的矩形
+                javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle(100, 100);
+                clip.setArcWidth(25);  // 圆角弧度，数值越大圆角越明显
+                clip.setArcHeight(25);
+
+                // 将矩形作为遮罩应用到 ImageView 上
+                iconImageView.setClip(clip);
+
+                // 3. 可选：给容器增加一点边框阴影效果，让圆角更平滑
+                iconContainer.setStyle("-fx-background-radius: 12.5; " +
+                        "-fx-border-radius: 12.5; " +
+                        "-fx-border-color: #E0E0E0; " +
+                        "-fx-border-width: 1;");
             }
         } catch (Exception e) {
-            System.err.println("加载图标失败: " + type + ", 错误: " + e.getMessage());
+            System.err.println("加载图标失败: " + e.getMessage());
         }
     }
 

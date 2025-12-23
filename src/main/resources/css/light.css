@@ -24,6 +24,7 @@
 .label, .table-cell {
     -fx-text-fill: -fx-text-main;
 }
+
 .sidebar {
     -fx-background-color: -fx-bg-sidebar;
 }
@@ -45,6 +46,7 @@
 .nav-button:hover {
     -fx-background-color: -fx-nav-hover;
 }
+
 /* --- 核心：激活/选中状态样式 --- */
 .nav-button.active {
     -fx-background-color: -fx-nav-hover; /* 或者选一个更有对比度的颜色 */
@@ -167,26 +169,58 @@
     -fx-font-size: 15px;
 }
 
+/* --- 操作列按钮：详情 (橙色系) --- */
 .action-btn-detail {
-    -fx-background-color: #f0ad4e;
-    -fx-text-fill: white;
+    -fx-background-color: #f0ad4e; /* 深色模式下降低亮度，避免刺眼 */
+    -fx-text-fill: #ffffff;
+    -fx-cursor: hand;
 }
+
+.action-btn-detail:hover {
+    -fx-background-color: #a67c00;
+    -fx-text-fill: #ffffff;
+}
+
+/* --- 操作列按钮：同步 (蓝色系) --- */
 .action-btn-sync {
     -fx-background-color: #5bc0de;
-    -fx-text-fill: white;
+    -fx-text-fill: #ffffff;
+    -fx-cursor: hand;
 }
-.status-active {
-    -fx-text-fill: green;
+
+.action-btn-sync:hover {
+    -fx-background-color: #00668a;
+    -fx-text-fill: #ffffff;
+}
+
+.action-btn-styled {
+    -fx-cursor: hand;
+}
+
+/* 使用更具体的选择器来提高权重 */
+.table-cell .status-active {
+    -fx-text-fill: #4caf50 !important;
     -fx-font-weight: bold;
 }
-.status-inactive {
-    -fx-text-fill: red;
+
+.table-cell .status-inactive {
+    -fx-text-fill: #f44336 !important;
 }
+
+/* 关键：处理选中状态，否则背景是蓝色的，绿字看不清 */
+.table-row-cell:selected .table-cell.status-active,
+.table-row-cell:selected .table-cell.status-inactive {
+    -fx-text-fill: white !important;
+}
+
 .pagination .table-view {
     -fx-background-color: transparent;
 }
+
 /* 根容器背景 */
-.detail-root-pane { -fx-background-color: #f5f5f5; }
+.detail-root-pane {
+    -fx-background-color: #f5f5f5;
+}
 
 /* 图片外框 */
 .image-container-box {
@@ -204,7 +238,10 @@
     -fx-font-size: 14px;
     -fx-background-radius: 2;
 }
-.side-action-button:hover { -fx-background-color: #f0f0f0; }
+
+.side-action-button:hover {
+    -fx-background-color: #f0f0f0;
+}
 
 /* 信息行条目 */
 .info-row {
@@ -215,20 +252,29 @@
 }
 
 /* 文字颜色 */
-.info-label { -fx-text-fill: #666666; -fx-font-size: 14px; }
-.value-label { -fx-text-fill: #222222; -fx-font-size: 14px; }
+.info-label {
+    -fx-text-fill: #666666;
+    -fx-font-size: 14px;
+}
+
+.value-label {
+    -fx-text-fill: #222222;
+    -fx-font-size: 14px;
+}
 
 /* 底部确定按钮 */
 .primary-confirm-button {
     -fx-background-color: #007bff;
     -fx-text-fill: white;
     -fx-font-weight: bold;
+    -fx-cursor: hand;
 }
 
 /* 底部取消按钮 */
 .secondary-cancel-button {
     -fx-background-color: #e0e0e0;
     -fx-text-fill: #444444;
+    -fx-cursor: hand;
 }
 
 /* 窗口底色 */
@@ -283,6 +329,7 @@
     -fx-text-fill: white;
     -fx-cursor: hand;
 }
+
 .accent-button:hover {
     -fx-background-color: #0069d9;
 }
@@ -303,13 +350,19 @@
     -fx-background-color: #2ecc71;
     -fx-text-fill: white;
 }
-.btn-success:hover { -fx-background-color: #27ae60; }
+
+.btn-success:hover {
+    -fx-background-color: #27ae60;
+}
 
 .btn-info {
     -fx-background-color: #3498db;
     -fx-text-fill: white;
 }
-.btn-info:hover { -fx-background-color: #2980b9; }
+
+.btn-info:hover {
+    -fx-background-color: #2980b9;
+}
 
 /* 3. 修复表单输入框的查找逻辑 */
 .form-input {
@@ -333,6 +386,7 @@
 .table-view .table-cell {
     -fx-alignment: CENTER_LEFT;
     -fx-padding: 0 10 0 10;
+    -fx-text-fill: -fx-text-main; /* 确保默认是深蓝色/灰色 */
 }
 
 /* 如果行内有按钮，按钮的高度不能超过 cell-size */
@@ -340,14 +394,17 @@
     -fx-padding: 3 10; /* 减小按钮内边距，防止撑开行高 */
     -fx-font-size: 12px;
 }
+
 .table-view .column-header {
     -fx-background-color: #eeeeee;
 }
+
 /* 确保表格内的 Label 不会撑开行高 */
 .table-view .table-cell .label {
     -fx-padding: 0;
     -fx-font-size: 13px;
 }
+
 /* 选中行高亮 */
 .custom-table-view .table-row-cell:selected {
     -fx-background-color: #334372;
@@ -421,7 +478,7 @@
     -fx-background-color: -fx-base-bg;
     -fx-background-radius: 12;
     -fx-padding: 30;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 15, 0, 0, 0);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.3), 15, 0, 0, 0);
 }
 
 /* 自定义进度条颜色 */
@@ -432,7 +489,7 @@
 /* 为 Logo 图片添加简单的圆角或光泽（如果是圆形 Logo） */
 .sidebar ImageView {
     /* 如果你的 Logo 本身不是圆的，可以尝试在这里加阴影 */
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 10, 0, 0, 0);
 }
 
 /* 标题文字样式 */
@@ -469,4 +526,21 @@
     -fx-fill: #95a5a6; /* 使用比正文浅的灰色 */
     -fx-font-size: 13px;
     -fx-font-style: italic; /* 斜体增加区分度 */
+}
+
+/* 2. 核心修复：选中行时的文字颜色 */
+/* 使用冒号状态选择器，并深入到 .text 层级 */
+.table-view .table-row-cell:selected .table-cell,
+.table-view .table-row-cell:selected .table-cell .text,
+.table-view .table-row-cell:selected .table-cell .label {
+    -fx-text-fill: white !important;
+    -fx-fill: white !important;
+}
+
+/* 3. 显式恢复：当行变为“未选中”且“填充数据”时，颜色必须回归 */
+.table-view .table-row-cell:filled:not(:selected) .table-cell,
+.table-view .table-row-cell:filled:not(:selected) .table-cell .text,
+.table-view .table-row-cell:filled:not(:selected) .table-cell .label {
+    -fx-text-fill: -fx-text-main !important;
+    -fx-fill: -fx-text-main !important;
 }

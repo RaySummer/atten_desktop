@@ -184,9 +184,11 @@ public class EmployeeListController {
 
             {
                 detailButton.getStyleClass().add("action-btn-detail");
+                detailButton.setStyle("-fx-text-fill: #ffffff;");
                 detailButton.setOnAction(event -> openViewInDrawer("/view/EmployeeDetailView.fxml", getTableView().getItems().get(getIndex())));
 
                 syncButton.getStyleClass().add("action-btn-sync");
+                syncButton.setStyle("-fx-text-fill: #ffffff;");
                 syncButton.setOnAction(event -> openViewInDrawer("/view/SyncGroupView.fxml", getTableView().getItems().get(getIndex())));
 
                 pane.setAlignment(Pos.CENTER);
@@ -374,7 +376,7 @@ public class EmployeeListController {
                 if (empty || item == null) setText(null);
                 else {
                     setText(item ? "在职" : "离职");
-                    getStyleClass().add(item ? "status-active" : "status-inactive");
+                    setStyle(item ? "-fx-text-fill: #2ecc71;" : "-fx-text-fill: #ff3333;");
                 }
             }
         });

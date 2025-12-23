@@ -219,6 +219,7 @@
     -fx-background-color: #855a00; /* 深色模式下降低亮度，避免刺眼 */
     -fx-text-fill: #ffd48a;
     -fx-border-color: #a67c00;
+    -fx-cursor: hand;
 }
 
 .action-btn-detail:hover {
@@ -230,20 +231,32 @@
     -fx-background-color: #004a63;
     -fx-text-fill: #8cdcfe;
     -fx-border-color: #00668a;
+    -fx-cursor: hand;
 }
 
 .action-btn-sync:hover {
     -fx-background-color: #00668a;
 }
 
+.action-btn-styled {
+    -fx-cursor: hand;
+}
+
 /* --- 在职/离职文字状态 --- */
-.status-active {
-    -fx-text-fill: #4caf50; /* 亮绿色 */
+/* 使用更具体的选择器来提高权重 */
+.table-cell .status-active {
+    -fx-text-fill: #4caf50 !important;
     -fx-font-weight: bold;
 }
 
-.status-inactive {
-    -fx-text-fill: #f44336; /* 亮红色 */
+.table-cell .status-inactive {
+    -fx-text-fill: #f44336 !important;
+}
+
+/* 关键：处理选中状态，否则背景是蓝色的，绿字看不清 */
+.table-row-cell:selected .table-cell.status-active,
+.table-row-cell:selected .table-cell.status-inactive {
+    -fx-text-fill: white !important;
 }
 
 /* --- TableView 选中行的高亮强度增强 --- */
@@ -353,6 +366,7 @@
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-background-radius: 4;
+    -fx-cursor: hand;
 }
 
 /* 底部取消按钮 */
@@ -360,6 +374,7 @@
     -fx-background-color: #2a2a2a;
     -fx-text-fill: #999999;
     -fx-background-radius: 4;
+    -fx-cursor: hand;
 }
 
 /* 窗口底色 */
@@ -656,7 +671,7 @@
     -fx-background-color: -fx-base-bg;
     -fx-background-radius: 12;
     -fx-padding: 30;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 15, 0, 0, 0);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.3), 15, 0, 0, 0);
 }
 
 /* 自定义进度条颜色 */
@@ -667,7 +682,7 @@
 /* 为 Logo 图片添加简单的圆角或光泽（如果是圆形 Logo） */
 .sidebar ImageView {
     /* 如果你的 Logo 本身不是圆的，可以尝试在这里加阴影 */
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 10, 0, 0, 0);
 }
 
 /* 标题文字样式 */

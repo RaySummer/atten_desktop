@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox fx:id="rootBox" alignment="CENTER" spacing="15.0" prefWidth="400.0"
+      style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #ddd; -fx-border-width: 1;-fx-cursor: hand;"
+      xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.ray.atten.desktop.presentation.controller.component.DownloadProgressController">
+    <children>
+        <Label fx:id="titleLabel" text="正在下载系统更新..." style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+
+        <ProgressBar fx:id="progressBar" prefWidth="350.0" progress="0.0"
+                     style="-fx-accent: #2196F3;"/>
+
+        <HBox alignment="CENTER_RIGHT" prefWidth="350.0">
+            <children>
+                <Label fx:id="statusLabel" text="0.0 MB / 0.0 MB" style="-fx-text-fill: #666;"/>
+            </children>
+        </HBox>
+    </children>
+    <padding>
+        <Insets bottom="25.0" left="25.0" right="25.0" top="25.0"/>
+    </padding>
+</VBox>

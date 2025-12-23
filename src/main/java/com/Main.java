@@ -60,9 +60,20 @@ public class Main extends Application {
             Parent root = loader.load();
             Scene scene = new Scene(root);
             stage.setScene(scene);
+
+            String iconPath = "/images/logo-50.png"; // 请务必确认此路径与 resources 下一致
+            var is50 = getClass().getResourceAsStream(iconPath);
+            var isOrg = getClass().getResourceAsStream("/images/logo.png");
+            if (is50 != null) {
+                stage.getIcons().clear();
+                stage.getIcons().add(new Image(is50));
+                stage.getIcons().add(new Image(isOrg));
+            } else {
+                System.err.println("警告：未找到图标文件 " + iconPath + "，将使用默认图标。");
+            }
+
             stage.initStyle(StageStyle.TRANSPARENT); // 隱藏操作系統的標題欄按鈕，顯得更簡潔
-//            stage.getIcons().add(new Image(getClass().getResource("/image/logo_big.png")));
-//            stage.setTitle("考勤系统 - 服务器配置");
+            stage.setTitle("考勤系统 - 服务器配置");
             stage.show();
         } catch (IOException e) {
             e.printStackTrace();

@@ -1,9 +1,14 @@
 package com.ray.atten.desktop.presentation.controller;
 
+import com.ray.atten.desktop.presentation.controller.component.CustomAlertDialogController;
+import com.ray.atten.desktop.presentation.controller.component.DownloadProgressController;
+import com.ray.atten.desktop.service.SysAppVersionService;
+import com.ray.atten.desktop.utils.AppConstants;
 import com.ray.atten.desktop.utils.ConfigRepo;
 import com.ray.atten.desktop.utils.CustomAlertDialog;
 import com.ray.atten.desktop.utils.LoadingManager;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -11,12 +16,18 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.stage.Window;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 @Component
 public class MainController {
@@ -40,6 +51,9 @@ public class MainController {
     private ConfigurableApplicationContext springContext;
 
     @Autowired
+    private SysAppVersionService versionService;
+
+    @Autowired
     private LoadingManager loadingManager;
 
     private double xOffset = 0;
@@ -57,6 +71,7 @@ public class MainController {
             applySavedTheme();
             // 默认显示员工界面并高亮按钮
             showEmployeeView();
+            checkUpdate();
         });
     }
 
@@ -148,6 +163,114 @@ public class MainController {
         }
         if (clickedButton != null) {
             clickedButton.getStyleClass().add("active");
+        }
+    }
+
+    /**
+     * 检查版本更新逻辑
+     */
+    public void checkUpdate() {
+        Task<Map<String, Object>> task = new Task<>() {
+            @Override
+            protected Map<String, Object> call() throws Exception {
+                return versionService.checkUpdateFromServer(AppConstants.CURRENT_VERSION);
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            Map<String, Object> data = task.getValue();
+            if (data != null && (boolean) data.get("hasUpdate")) {
+                String latestVersion = (String) data.get("latestVersion");
+                String log = (String) data.get("updateLog");
+                String downloadUrl = (String) data.get("downloadUrl");
+
+                showCustomUpdateDialog(latestVersion, log, downloadUrl);
+            }
+        });
+
+        task.setOnFailed(event -> {
+            // 可以记录日志或弹窗提示网络异常
+            task.getException().printStackTrace();
+        });
+
+        new Thread(task).start();
+    }
+
+    /**
+     * 弹出更新对话框
+     */
+    private void showCustomUpdateDialog(String version, String log, String relativeUrl) {
+        // 构造显示的消息内容
+        String message = String.format("发现新版本 v%s\n\n更新日志：\n%s\n\n是否立即下载更新？", version, log);
+
+        // 使用你封装的自定义弹窗类
+        // 标题可以根据需要传入，或者传 null 使用默认
+        boolean confirmed = CustomAlertDialog.showConfirmation("系统更新", message);
+
+        // 用户点击了“确认”按钮
+        if (confirmed) {
+            startDownloadTask(relativeUrl);
+        }
+    }
+
+    private void startDownloadTask(String relativeUrl) {
+        try {
+            // 1. 加载弹窗
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/component/DownloadProgressView.fxml"));
+            loader.setControllerFactory(springContext::getBean);
+            Parent root = loader.load();
+            DownloadProgressController progressController = loader.getController();
+
+            Stage progressStage = new Stage();
+            // --- 核心修复：设置父窗口并计算位置 ---
+            Window owner = mainContainer.getScene().getWindow();
+            if (owner != null) {
+                progressStage.initOwner(owner);
+            }
+            progressStage.initModality(Modality.APPLICATION_MODAL);
+            progressStage.initStyle(StageStyle.TRANSPARENT);
+            Scene scene = new Scene(root);
+            scene.setFill(Color.TRANSPARENT);
+            progressStage.setScene(scene);
+            progressStage.show();
+
+            // 2. 获取 Task
+            Task<File> downloadTask = versionService.createDownloadTask(relativeUrl);
+
+            // 3. 核心修复：双向绑定 (确保进度条会动)
+            // 注意：必须在 UI 线程绑定
+            progressController.getProgressBar().progressProperty().bind(downloadTask.progressProperty());
+            progressController.getStatusLabel().textProperty().bind(downloadTask.messageProperty());
+
+            // 4. 下载成功监听
+            downloadTask.setOnSucceeded(e -> {
+                Platform.runLater(() -> {
+                    progressStage.close(); // 确保关闭
+                    versionService.executeUpdaterScript(); // 启动脚本
+                });
+            });
+
+            // 5. 下载失败监听
+            downloadTask.setOnFailed(e -> {
+                Platform.runLater(() -> {
+                    progressStage.close(); // 确保关闭
+                    Throwable ex = downloadTask.getException();
+                    CustomAlertDialog.showError("更新失败", "下载包损坏或网络超时: " + ex.getMessage());
+                });
+            });
+
+            // 6. 下载取消监听（可选）
+            downloadTask.setOnCancelled(e -> {
+                Platform.runLater(progressStage::close);
+            });
+
+            // 启动线程
+            Thread thread = new Thread(downloadTask);
+            thread.setDaemon(true);
+            thread.start();
+
+        } catch (IOException e) {
+            CustomAlertDialog.showError("加载失败", "无法启动下载窗口");
         }
     }
 }

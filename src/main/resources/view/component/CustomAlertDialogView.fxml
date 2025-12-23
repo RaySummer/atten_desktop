@@ -8,6 +8,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.Region?>
 
+<?import javafx.scene.layout.StackPane?>
 <VBox fx:id="dialogRoot" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.ray.atten.desktop.presentation.controller.component.CustomAlertDialogController"
       styleClass="dialog-root" alignment="CENTER" spacing="20" prefWidth="420.0">
@@ -16,13 +17,22 @@
         <Insets top="25.0" right="25.0" bottom="25.0" left="25.0"/>
     </padding>
 
-    <HBox alignment="CENTER_LEFT" spacing="15" VBox.vgrow="ALWAYS">
-        <children>
-            <ImageView fx:id="iconImageView" fitHeight="45.0" fitWidth="45.0"
-                       preserveRatio="true"/>
+    <HBox alignment="CENTER_LEFT" spacing="25" VBox.vgrow="ALWAYS">
+        <padding>
+            <Insets left="10.0" right="10.0" top="10.0" bottom="10.0"/>
+        </padding>
 
-            <Label fx:id="messageLabel" text="这是一条自定义警告或提示信息。" wrapText="true"
-                   styleClass="dialog-message" />
+        <children>
+            <StackPane fx:id="iconContainer" minWidth="100.0" minHeight="100.0"
+                       maxWidth="100.0" maxHeight="100.0" styleClass="icon-container">
+                <ImageView fx:id="iconImageView" fitHeight="80.0" fitWidth="80.0" preserveRatio="true"/>
+            </StackPane>
+
+            <Label fx:id="messageLabel" text="这是一条自定义警告或提示信息。"
+                   wrapText="true" lineSpacing="5.0"
+                   styleClass="dialog-message"
+                   maxWidth="260.0"
+                   VBox.vgrow="ALWAYS"/>
         </children>
     </HBox>
 
@@ -30,9 +40,9 @@
         <children>
             <Region HBox.hgrow="ALWAYS"/>
             <Button fx:id="confirmButton" text="确定" prefWidth="90"
-                    onAction="#handleConfirm" styleClass="btn-primary" />
+                    onAction="#handleConfirm" styleClass="btn-primary"/>
             <Button fx:id="cancelButton" text="取消" prefWidth="90"
-                    onAction="#handleCancel" styleClass="btn-secondary" />
+                    onAction="#handleCancel" styleClass="btn-secondary"/>
         </children>
     </HBox>
 </VBox>

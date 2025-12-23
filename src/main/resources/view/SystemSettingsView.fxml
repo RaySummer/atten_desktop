@@ -46,7 +46,43 @@
                     </VBox>
                 </content>
             </Tab>
+            <Tab text="版本更新">
+                <content>
+                    <VBox spacing="25.0" alignment="TOP_LEFT">
+                        <padding>
+                            <Insets top="30.0" left="20.0"/>
+                        </padding>
+                        <children>
+                            <HBox spacing="15.0" alignment="CENTER_LEFT">
+                                <children>
+                                    <Label text="当前版本号:" styleClass="normal-label" style="-fx-font-weight: bold;"/>
+                                    <Label fx:id="currentVersionLabel" text="v1.0.0" styleClass="normal-label"/>
+                                </children>
+                            </HBox>
 
+                            <VBox spacing="10.0">
+                                <children>
+                                    <Label text="软件更新说明：" styleClass="normal-label" style="-fx-font-weight: bold;"/>
+                                    <Label text="• 建议保持系统为最新版本，以获得最佳的性能与安全性。" styleClass="muted-label"/>
+                                    <Label text="• 更新过程将自动下载安装包并重启客户端。" styleClass="muted-label"/>
+                                </children>
+                            </VBox>
+
+                            <HBox spacing="15.0" alignment="CENTER_LEFT">
+                                <children>
+                                    <Button fx:id="btnCheckVersion" text="立即检查更新" onAction="#handleManualUpdate"
+                                            prefWidth="150.0" prefHeight="35.0"
+                                            style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;"/>
+
+                                    <ProgressIndicator fx:id="checkProgress" visible="false" prefHeight="20.0" prefWidth="20.0"/>
+
+                                    <Label fx:id="updateStatusLabel" text="" style="-fx-font-size: 13px;"/>
+                                </children>
+                            </HBox>
+                        </children>
+                    </VBox>
+                </content>
+            </Tab>
             <Tab text="关于">
                 <content>
                     <AnchorPane>
