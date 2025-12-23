@@ -44,7 +44,7 @@ public class OaEmployeeService {
             System.out.println("Request Json ->> " + requestJson);
 
             // 2. 調用 HttpClientUtil.doPost 發送請求
-            responseJson = HttpClientUtil.doPost(AppConstants.API_EMPLOYEE_SEARCH, requestJson);
+            responseJson = HttpClientUtil.doPost(AppConstants.getEmployeeSearchAPI(), requestJson);
 
             // 3. 解析 Middle 服務返回的 GlobalResponseBody 結構
             // 假設 Middle 返回的是 GlobalResponseBody 封裝 Page<OaEmployee>
@@ -81,7 +81,7 @@ public class OaEmployeeService {
 
     public List<AttendanceGroup> getAttendanceGroups() throws IOException {
         // 1. 執行 GET 請求
-        String jsonResponse = HttpClientUtil.doGet(AppConstants.API_ATTENDANCE_DEVICE_SEARCH, null); // 假設 doGet 返回 JSON 字符串
+        String jsonResponse = HttpClientUtil.doGet(AppConstants.getAttendanceDeviceSearchAPI(), null); // 假設 doGet 返回 JSON 字符串
 
         // 2. 解析 JSON 響應
         try {
@@ -119,7 +119,7 @@ public class OaEmployeeService {
 
         // 2. 執行 HTTP POST 請求
         // 假設您的 HttpClient 有一個方法 doGet/doPost，這裡使用 doPost
-        String responseJson = HttpClientUtil.doPost(AppConstants.API_SYNC_TO_MIDDLE, requestBodyJson);
+        String responseJson = HttpClientUtil.doPost(AppConstants.getSyncToMiddleAPI(), requestBodyJson);
 
         // 3. 解析響應，檢查同步結果
         try {

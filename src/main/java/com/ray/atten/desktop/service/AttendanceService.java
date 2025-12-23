@@ -35,7 +35,7 @@ public class AttendanceService {
 
             // 2. 调用 HttpClientUtil 发送 POST 请求
             // 假设你的 HttpClientUtil.postJson 方法接收 (url, jsonBody)
-            String responseJson = HttpClientUtil.doPost(AppConstants.API_ATTENDANCE_LOG_SEARCH, jsonRequest);
+            String responseJson = HttpClientUtil.doPost(AppConstants.getAttendanceLogSearchAPI(), jsonRequest);
 
             GlobalResponseBody globalResponse = objectMapper.readValue(
                     responseJson,

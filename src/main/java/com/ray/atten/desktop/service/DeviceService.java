@@ -48,7 +48,7 @@ public class DeviceService {
 
             System.out.println("Request Json ->> " + requestJson);
             // 1. 调用 HttpClientUtil.doGet
-            responseJson = HttpClientUtil.doPost(AppConstants.API_DEVICE_SEARCH, requestJson);
+            responseJson = HttpClientUtil.doPost(AppConstants.getDeviceSearchAPI(), requestJson);
 
             // 3. 解析 Middle 服務返回的 GlobalResponseBody 結構
             // 假設 Middle 返回的是 GlobalResponseBody 封裝 Page<OaEmployee>
@@ -84,7 +84,7 @@ public class DeviceService {
             // 1. 对象转 JSON
             String body = objectMapper.writeValueAsString(device);
             // 2. 调用 HttpClientUtil.doPost
-            String response = HttpClientUtil.doPost(AppConstants.API_ADD_OR_UPDATE_DEVICE, body);
+            String response = HttpClientUtil.doPost(AppConstants.getAddOrUpdateDeviceAPI(), body);
             // 3. 解析为 GlobalResponseBody
             GlobalResponseBody result = objectMapper.readValue(response, GlobalResponseBody.class);
 
@@ -113,7 +113,7 @@ public class DeviceService {
             System.out.println("发送同步指令 ->> " + body);
 
             // 3. 调用 HttpClientUtil 发送请求
-            String response = HttpClientUtil.doPost(AppConstants.API_SYNC_ATTENDANCE, body);
+            String response = HttpClientUtil.doPost(AppConstants.getSyncAttendanceAPI(), body);
 
             // 4. 解析响应
             GlobalResponseBody result = objectMapper.readValue(response, GlobalResponseBody.class);

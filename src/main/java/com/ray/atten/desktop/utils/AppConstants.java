@@ -79,35 +79,55 @@ public class AppConstants {
     //-----------------------
     // 需要调用的API地址全部写到这里
     //-----------------------
+
     /**
      * 員工查詢
      */
-    public static final String API_EMPLOYEE_SEARCH = API_BASE_URL + "/api/oa-employees/query";
+    public static String getEmployeeSearchAPI() {
+        return API_BASE_URL + "/api/oa-employees/query";
+    }
 
     /**
      * 查询考勤数据
      */
-    public static final String API_ATTENDANCE_LOG_SEARCH = API_BASE_URL + "/api/atten/query";
+    public static String getAttendanceLogSearchAPI() {
+        return API_BASE_URL + "/api/atten/query";
+    }
+
     /**
      * 获取考勤组
      */
-    public static final String API_ATTENDANCE_DEVICE_SEARCH = API_BASE_URL + "/api/atten/group";
+    public static String getAttendanceDeviceSearchAPI() {
+        return API_BASE_URL + "/api/atten/group";
+    }
+
     /**
      * 同步人员/指纹/照片到Middle
      */
-    public static final String API_SYNC_TO_MIDDLE = API_BASE_URL + "/api/sync/sync-employee";
+    public static String getSyncToMiddleAPI() {
+        return API_BASE_URL + "/api/sync/sync-employee";
+    }
+
     /**
      * 同步考勤数据
      */
-    public static final String API_SYNC_ATTENDANCE = API_BASE_URL + "/api/device-commend";
+    public static String getSyncAttendanceAPI() {
+        return API_BASE_URL + "/api/device-commend";
+    }
+
     /**
      * 获取考勤机列表
      */
-    public static final String API_DEVICE_SEARCH = API_BASE_URL + "/api/device/query";
+    public static String getDeviceSearchAPI() {
+        return API_BASE_URL + "/api/device/query";
+    }
+
     /**
      * 添加或修改考勤机
      */
-    public static final String API_ADD_OR_UPDATE_DEVICE = API_BASE_URL + "/api/management/devices";
+    public static String getAddOrUpdateDeviceAPI() {
+        return API_BASE_URL + "/api/management/devices";
+    }
 
 
     public static String dateTimeFormatter(LocalDateTime dateTime, String formatType) {
