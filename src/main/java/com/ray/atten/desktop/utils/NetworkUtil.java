@@ -7,10 +7,11 @@ import java.net.URL;
 
 public class NetworkUtil {
     // 校验主机名（IP或域名）
-    private static final String HOST_REGEX = "^(?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|-){0,61}[0-9A-Za-z])?(?:\\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|-){0,61}[0-9A-Za-z])?)*\\.?$";
+    private static final String HOST_REGEX = "^(?=.{1,255}$)[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+$";
 
     public static boolean isValidHost(String host) {
-        return host != null && host.matches(HOST_REGEX);
+        // 如果需要同时兼容 localhost 或 纯IP，这个正则也能很好处理
+        return host != null && (host.matches(HOST_REGEX) || host.equals("localhost"));
     }
 
     /**
