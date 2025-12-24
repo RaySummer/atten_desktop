@@ -297,7 +297,7 @@ public class EmployeeListController {
     }
 
     private void loadEmployeeData(int pageIndex) {
-
+        loadingManager.show("正在加载中.....");
         OaEmployeeQueryRequest request = new OaEmployeeQueryRequest();
         request.setKeyword(queryField.getText().trim());
         request.setInService(currentInServiceStatus);

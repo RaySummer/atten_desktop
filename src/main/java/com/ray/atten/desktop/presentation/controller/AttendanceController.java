@@ -177,6 +177,7 @@ public class AttendanceController {
     }
 
     private void loadAttendanceData(int pageIndex) {
+        loadingManager.show("正在加载中.....");
         AttendanceLogRequest request = buildRequest();
         request.setPageNum(pageIndex + 1);
         request.setPageSize(currentPageSize);
