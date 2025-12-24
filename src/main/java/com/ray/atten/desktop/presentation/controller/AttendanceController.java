@@ -5,6 +5,8 @@ import com.ray.atten.desktop.dto.PageResponse;
 import com.ray.atten.desktop.model.AttendanceLog;
 import com.ray.atten.desktop.service.AttendanceService;
 import com.ray.atten.desktop.utils.AppConstants;
+import com.ray.atten.desktop.utils.CustomAlertDialog;
+import com.ray.atten.desktop.utils.LoadingManager;
 import javafx.animation.TranslateTransition;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -22,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import java.net.SocketTimeoutException;
 import java.time.LocalDateTime;
 
 @Component
@@ -51,6 +54,8 @@ public class AttendanceController {
     private Pagination pagination;
     @FXML
     private ComboBox<Integer> pageSizeComboBox;
+    @Autowired
+    private LoadingManager loadingManager;
 
     // --- 动态 TableView ---
     private TableView<AttendanceLog> attendanceTable;
@@ -138,6 +143,7 @@ public class AttendanceController {
     }
 
     private void updatePaginationMetadata() {
+        loadingManager.show("正在加载中.....");
         AttendanceLogRequest request = buildRequest();
         request.setPageNum(1);
         request.setPageSize(currentPageSize);
@@ -149,11 +155,22 @@ public class AttendanceController {
             }
         };
         metadataTask.setOnSucceeded(e -> {
+            loadingManager.hide();
             PageResponse<AttendanceLog> response = metadataTask.getValue();
             if (response != null) {
                 totalRecords = response.getTotalElements();
                 pagination.setPageCount(Math.max(1, (int) Math.ceil((double) totalRecords / currentPageSize)));
                 loadAttendanceData(pagination.getCurrentPageIndex());
+            }
+        });
+        metadataTask.setOnFailed(e -> {
+            Throwable exception = metadataTask.getException();
+            if (exception instanceof SocketTimeoutException || exception.getMessage().contains("timeout")) {
+                // 3. 超时显示重试按钮，重试逻辑就是再次调用本方法
+                loadingManager.showTimeout(() -> updatePaginationMetadata());
+            } else {
+                loadingManager.hide();
+                CustomAlertDialog.showError("错误", "加载失败");
             }
         });
         new Thread(metadataTask).start();
@@ -177,6 +194,16 @@ public class AttendanceController {
             if (res != null) {
                 attendanceTable.setItems(FXCollections.observableArrayList(res.getContent()));
                 statusLabel.setText(String.format("页面 %d/%d 加载完成。总记录: %d", pageIndex + 1, pagination.getPageCount(), res.getTotalElements()));
+            }
+        });
+        loadTask.setOnFailed(e -> {
+            Throwable exception = loadTask.getException();
+            if (exception instanceof SocketTimeoutException || exception.getMessage().contains("timeout")) {
+                // 3. 超时显示重试按钮，重试逻辑就是再次调用本方法
+                loadingManager.showTimeout(() -> loadAttendanceData(pageIndex));
+            } else {
+                loadingManager.hide();
+                CustomAlertDialog.showError("错误", "加载失败");
             }
         });
         new Thread(loadTask).start();
