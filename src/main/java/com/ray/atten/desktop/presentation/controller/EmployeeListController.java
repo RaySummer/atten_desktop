@@ -260,6 +260,7 @@ public class EmployeeListController {
     }
 
     private void updatePaginationMetadata() {
+        loadingManager.show("正在加载中.....");
         String query = queryField.getText().trim();
         OaEmployeeQueryRequest request = new OaEmployeeQueryRequest();
         request.setKeyword(query);
@@ -282,11 +283,21 @@ public class EmployeeListController {
                 loadEmployeeData(pagination.getCurrentPageIndex());
             }
         });
+        metadataTask.setOnFailed(e -> {
+            Throwable exception = metadataTask.getException();
+            if (exception instanceof SocketTimeoutException || exception.getMessage().contains("timeout")) {
+                // 3. 超时显示重试按钮，重试逻辑就是再次调用本方法
+                loadingManager.showTimeout(() -> updatePaginationMetadata());
+            } else {
+                loadingManager.hide();
+                CustomAlertDialog.showError("错误", "加载失败");
+            }
+        });
         new Thread(metadataTask).start();
     }
 
     private void loadEmployeeData(int pageIndex) {
-        loadingManager.show("正在加载中.....");
+
         OaEmployeeQueryRequest request = new OaEmployeeQueryRequest();
         request.setKeyword(queryField.getText().trim());
         request.setInService(currentInServiceStatus);
@@ -307,16 +318,6 @@ public class EmployeeListController {
             if (res != null) {
                 employeeTable.setItems(FXCollections.observableArrayList(res.getContent()));
                 statusLabel.setText(String.format("页面 %d/%d 加载完成。总记录: %d", pageIndex + 1, pagination.getPageCount(), res.getTotalElements()));
-            }
-        });
-        loadTask.setOnFailed(e -> {
-            Throwable exception = loadTask.getException();
-            if (exception instanceof SocketTimeoutException || exception.getMessage().contains("timeout")) {
-                // 3. 超时显示重试按钮，重试逻辑就是再次调用本方法
-                loadingManager.showTimeout(() -> loadEmployeeData(pageIndex));
-            } else {
-                loadingManager.hide();
-                CustomAlertDialog.showError("错误", "加载失败");
             }
         });
         new Thread(loadTask).start();
