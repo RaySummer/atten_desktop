@@ -24,32 +24,35 @@ set "NEW_FILE=%~1"
 set "TARGET_DIR=%~2"
 set "TARGET_NAME=%~3"
 
-:: 1. 循环等待主进程完全退出，防止文件被占用无法覆盖
-:WAIT_LOOP
-:: 使用通配符 AttenDesktop* 来匹配所有可能的版本号进程
-tasklist /FI "IMAGENAME eq AttenDesktop*" 2>NUL | find /I /N "AttenDesktop">NUL
-if "%ERRORLEVEL%"=="0" (
-    timeout /t 1 /nobreak >nul
-    goto WAIT_LOOP
+:: 1. 彻底杀死 Java 进程，确保文件锁被释放
+taskkill /f /im javaw.exe /t >nul 2>&1
+taskkill /f /im AttenDesktop* /t >nul 2>&1
+timeout /t 2 /nobreak >nul
+
+:: 2. 进入目标目录并强制删除旧 Jar
+cd /d "!TARGET_DIR!"
+if exist "!TARGET_NAME!" (
+    del /f /q "!TARGET_NAME!"
 )
 
-:: 2. 执行覆盖（双引号是处理空格的关键）
-:: /Y 表示不提示直接覆盖
-copy /Y "!NEW_FILE!" "!TARGET_DIR!\!TARGET_NAME!"
+:: 3. 覆盖文件：将 update_new.jar 变成 TARGET_NAME (如 atten_desktop-latest.jar)
+copy /Y "!NEW_FILE!" "!TARGET_NAME!"
 
-:: 3. 清理临时文件
-del /Q "!NEW_FILE!"
+:: 4. 再次检查是否覆盖成功 (可选增强)
+if not exist "!TARGET_NAME!" (
+    echo 错误：文件覆盖失败！
+    pause
+    exit
+)
 
-:: 4. 重新启动程序
-cd /d "%~dp0"
+:: 5. 清理临时文件
+del /q "!NEW_FILE!"
 
-:: 方案 1：如果你决定按方案 A 锁定名称，保留这一行即可
-:: start "" "AttenDesktop.exe"
-
-:: 方案 2：模糊匹配启动（寻找当前目录下任何以 AttenDesktop 开头的 exe）
+:: 6. 返回根目录重启 EXE
+cd /d ".."
 for %%i in (AttenDesktop*.exe) do (
     start "" "%%i"
-    goto :EXIT_SCRIPT
+    goto EXIT_SCRIPT
 )
 
 :EXIT_SCRIPT

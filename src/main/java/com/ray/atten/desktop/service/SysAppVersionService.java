@@ -148,7 +148,7 @@ public class SysAppVersionService {
      */
     public void executeUpdaterScript() {
         try {
-            // 1. 定位下载好的新 Jar 包（必须与上面定义的路径一致）
+            // 1. 定位下载好的临时文件
             String tempPath = System.getProperty("java.io.tmpdir");
             File tempNewJar = new File(tempPath, "atten_update/update_new.jar");
 
@@ -156,39 +156,40 @@ public class SysAppVersionService {
                 throw new IOException("找不到已下载的更新包");
             }
 
-            // 2. 获取程序运行根目录（.exe 所在目录）
+            // 2. 获取程序运行根目录（EXE 所在目录）
             String userDir = System.getProperty("user.dir");
             File rootDir = new File(userDir);
 
-            // 3. 寻找 updater.bat (jpackage 默认放在安装根目录)
+            // 3. 寻找 updater.bat
             File batchFile = new File(rootDir, "updater.bat");
             if (!batchFile.exists()) {
-                // 兼容性搜索：如果根目录没找到，去 app 目录找
-                batchFile = new File(rootDir, "app/updater.bat");
+                batchFile = new File(rootDir, "app/updater.bat"); // 兼容 app 目录下
             }
 
             if (!batchFile.exists()) {
-                throw new IOException("在安装目录中未找到 updater.bat");
+                throw new IOException("未找到 updater.bat，位置: " + rootDir.getAbsolutePath());
             }
 
-            // 4. 获取当前正在运行的 Jar 信息
-            File currentJar = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
-            String jarDir = currentJar.getParent();
-            String jarName = currentJar.getName();
+            // 4. 【关键修正】获取当前 Jar 的信息
+            // 无论当前运行的是 1.0.2 还是 1.0.5，获取它的绝对路径和名字
+            File currentJarFile = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
+            String jarDirectory = currentJarFile.getParent();
+            String currentJarName = currentJarFile.getName(); // 得到当前运行的真实文件名
 
-            // 5. 启动脚本并传入参数
-            // 参数1: 新包绝对路径, 参数2: 旧包文件夹路径, 参数3: 旧包文件名
+            // 5. 启动脚本
+            // 参数说明:
+            // %1: tempNewJar (下载好的 1.0.5 内容)
+            // %2: jarDirectory (app 目录)
+            // %3: currentJarName (目标文件名，可能是 atten_desktop-latest.jar)
             ProcessBuilder pb = new ProcessBuilder(
                     "cmd.exe", "/c", "start", "/min",
                     batchFile.getAbsolutePath(),
                     tempNewJar.getAbsolutePath(),
-                    jarDir,
-                    jarName
+                    jarDirectory,
+                    currentJarName
             );
 
             pb.start();
-
-            // 立即退出主程序，释放 Jar 文件占用，方便脚本替换
             System.exit(0);
 
         } catch (Exception e) {
