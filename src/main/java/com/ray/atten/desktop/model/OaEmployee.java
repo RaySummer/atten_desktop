@@ -20,7 +20,7 @@ public class OaEmployee implements Serializable {
     private String company;
     private String dept;
     private Boolean inService;
-
+    private String officeLocation;
     // 確保這裡的屬性名和類型與 Middle 服務返回的 JSON 結構完全一致
     private LocalDateTime entryDate;
     private LocalDateTime createTime;

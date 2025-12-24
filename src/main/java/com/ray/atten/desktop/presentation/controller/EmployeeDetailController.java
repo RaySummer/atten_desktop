@@ -42,7 +42,7 @@ public class EmployeeDetailController {
     private ImageView fingerprint1ImageView;
 
     @FXML
-    private Label pinLabel, nameLabel, deptLabel, entryDateLabel, statusLabel, lblMessage;
+    private Label pinLabel, nameLabel, deptLabel, officeLocationLabel, entryDateLabel, statusLabel, lblMessage;
     @FXML
     private Button captureButton, uploadButton, enrollButton, reconnectButton, verifyButton, confirmButton, cancelButton;
 
@@ -84,9 +84,10 @@ public class EmployeeDetailController {
     public void setEmployeeInfo(OaEmployee employee) {
         this.employee = employee;
         if (employee != null) {
-            pinLabel.setText(employee.getPin() != null ? employee.getPin() : "00000");
-            nameLabel.setText(employee.getName() != null ? employee.getName() : "[未设置]");
-            deptLabel.setText(employee.getDept() != null ? employee.getDept() : "[待加载]");
+            pinLabel.setText(employee.getPin() != null ? employee.getPin() : "");
+            nameLabel.setText(employee.getName() != null ? employee.getName() : "");
+            deptLabel.setText(employee.getDept() != null ? employee.getDept() : "");
+            officeLocationLabel.setText(employee.getOfficeLocation() != null ? employee.getOfficeLocation() : "");
             entryDateLabel.setText(employee.getEntryDate() != null ?
                     AppConstants.dateTimeFormatter(employee.getEntryDate(), AppConstants.YYYY_MM_DD) :
                     AppConstants.dateTimeFormatter(LocalDateTime.now(), AppConstants.YYYY_MM_DD));

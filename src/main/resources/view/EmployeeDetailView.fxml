@@ -39,20 +39,24 @@
                     <VBox spacing="10.0">
                         <children>
                             <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="info-row-item">
-                                <Label text="工号:" styleClass="info-label" prefWidth="80"/>
+                                <Label text="       工号:" styleClass="info-label" prefWidth="80"/>
                                 <Label fx:id="pinLabel" text="20067" HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="value-label"/>
                             </HBox>
                             <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="info-row-item">
-                                <Label text="姓名:" styleClass="info-label" prefWidth="80"/>
+                                <Label text="       姓名:" styleClass="info-label" prefWidth="80"/>
                                 <Label fx:id="nameLabel" text="[未设置]" HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="value-label"/>
                             </HBox>
                             <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="info-row-item">
-                                <Label text="部门:" styleClass="info-label" prefWidth="80"/>
+                                <Label text="       部门:" styleClass="info-label" prefWidth="80"/>
                                 <Label fx:id="deptLabel" text="[待加载]" HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="value-label"/>
                             </HBox>
                             <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="info-row-item">
-                                <Label text="状态:" styleClass="info-label" prefWidth="80"/>
+                                <Label text="       状态:" styleClass="info-label" prefWidth="80"/>
                                 <Label fx:id="statusLabel" text="在职" HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="value-label"/>
+                            </HBox>
+                            <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="info-row-item">
+                                <Label text="办公地点:" styleClass="info-label" prefWidth="80"/>
+                                <Label fx:id="officeLocationLabel" text="[待加载]" HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="value-label"/>
                             </HBox>
                             <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="info-row-item">
                                 <Label text="入职时间:" styleClass="info-label" prefWidth="80"/>

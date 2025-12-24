@@ -67,7 +67,7 @@ public class EmployeeListController {
 
     // --- TableView 相關控件 ---
     private TableView<OaEmployee> employeeTable;
-    private TableColumn<OaEmployee, String> pinColumn, nameColumn, deptColumn;
+    private TableColumn<OaEmployee, String> pinColumn, nameColumn, deptColumn, officeLocation;
     private TableColumn<OaEmployee, Boolean> inServiceColumn;
     private TableColumn<OaEmployee, LocalDateTime> entryDateColumn, createTimeColumn;
     private TableColumn<OaEmployee, Void> actionColumn;
@@ -95,6 +95,7 @@ public class EmployeeListController {
         setupCenterAlignmentForTextColumn(pinColumn);
         setupCenterAlignmentForTextColumn(nameColumn);
         setupCenterAlignmentForTextColumn(deptColumn);
+        setupCenterAlignmentForTextColumn(officeLocation);
 
         employeeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         setupPaginationAndControls();
@@ -224,6 +225,7 @@ public class EmployeeListController {
         pinColumn = new TableColumn<>("工号");
         nameColumn = new TableColumn<>("姓名");
         deptColumn = new TableColumn<>("部门");
+        officeLocation = new TableColumn<>("办公地点");
         inServiceColumn = new TableColumn<>("是否在职");
         entryDateColumn = new TableColumn<>("入职日期");
         actionColumn = new TableColumn<>("操作");
@@ -240,6 +242,7 @@ public class EmployeeListController {
         pinColumn.setCellValueFactory(new PropertyValueFactory<>("pin"));
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         deptColumn.setCellValueFactory(new PropertyValueFactory<>("dept"));
+        officeLocation.setCellValueFactory(new PropertyValueFactory<>("officeLocation"));
         inServiceColumn.setCellValueFactory(new PropertyValueFactory<>("inService"));
         entryDateColumn.setCellValueFactory(new PropertyValueFactory<>("entryDate"));
 //        createTimeColumn.setCellValueFactory(new PropertyValueFactory<>("createTime"));
@@ -253,7 +256,7 @@ public class EmployeeListController {
             }
         });
 
-        employeeTable.getColumns().addAll(rowNumberColumn, pinColumn, nameColumn, deptColumn, inServiceColumn, entryDateColumn, actionColumn);
+        employeeTable.getColumns().addAll(rowNumberColumn, pinColumn, nameColumn, deptColumn, officeLocation, inServiceColumn, entryDateColumn, actionColumn);
     }
 
     private void updatePaginationMetadata() {
