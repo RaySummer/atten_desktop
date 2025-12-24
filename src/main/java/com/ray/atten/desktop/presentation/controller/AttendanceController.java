@@ -191,6 +191,7 @@ public class AttendanceController {
             }
         };
         loadTask.setOnSucceeded(e -> {
+            loadingManager.hide();
             PageResponse<AttendanceLog> res = loadTask.getValue();
             if (res != null) {
                 attendanceTable.setItems(FXCollections.observableArrayList(res.getContent()));
