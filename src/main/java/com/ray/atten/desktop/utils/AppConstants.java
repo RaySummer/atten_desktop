@@ -43,18 +43,26 @@ public class AppConstants {
      * @param port "8821" 或 "443"
      */
     public static void updateApiBaseUrl(String protocol, String host, String port) {
-        // 1. 去掉用户可能重复输入的 http:// 前缀
-        String cleanHost = host.replace("http://", "").replace("https://", "");
+        if (host == null || host.isEmpty()) return;
 
-        // 2. 拼接 URL
-        if (port == null || port.trim().isEmpty()) {
-            // 如果没写端口，根据协议判断默认端口（可选逻辑）
-            API_BASE_URL = protocol + cleanHost;
+        // 规范化 protocol 格式
+        String baseProtocol = protocol.endsWith("://") ? protocol : protocol + "://";
+
+        // 判断端口是否需要拼接
+        // 1. 如果端口为空
+        // 2. 如果是标准端口 80 或 443（浏览器默认处理，不需要显示在 URL 里）
+        if (port == null || port.trim().isEmpty() || "80".equals(port) || "443".equals(port)) {
+            API_BASE_URL = baseProtocol + host;
         } else {
-            API_BASE_URL = protocol + cleanHost + ":" + port;
+            API_BASE_URL = baseProtocol + host + ":" + port;
         }
 
-        System.out.println("[Config] API_BASE_URL 已更新为: " + API_BASE_URL);
+        // 移除末尾可能存在的斜杠
+        if (API_BASE_URL.endsWith("/")) {
+            API_BASE_URL = API_BASE_URL.substring(0, API_BASE_URL.length() - 1);
+        }
+
+        System.out.println("[Network] 全局 API 地址已更新为: " + API_BASE_URL);
     }
 
     // -----------------------------------------------------

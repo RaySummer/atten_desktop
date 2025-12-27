@@ -42,8 +42,28 @@ public class ServerSetupController {
     @FXML
     public void initialize() {
         protocolCombo.getItems().addAll("http://", "https://");
-        protocolCombo.getSelectionModel().select(0);
-        portField.setText("80");
+
+        // --- 新增：从磁盘加载并回显数据 ---
+        Properties props = ConfigRepo.loadConfig();
+        String savedProtocol = props.getProperty("server.protocol");
+        String savedHost = props.getProperty("server.host");
+        String savedPort = props.getProperty("server.port");
+
+        if (savedProtocol != null) {
+            protocolCombo.setValue(savedProtocol);
+        } else {
+            protocolCombo.getSelectionModel().select(0); // 默认 http
+        }
+
+        if (savedHost != null) {
+            hostField.setText(savedHost);
+        }
+
+        if (savedPort != null) {
+            portField.setText(savedPort);
+        } else {
+            portField.setText("80");
+        }
     }
 
     @FXML
@@ -139,20 +159,4 @@ public class ServerSetupController {
         }
     }
 
-    private void saveConfig(String protocol, String host, String port) {
-        Properties props = new Properties();
-        props.setProperty("server.protocol", protocol);
-        props.setProperty("server.host", host);
-        props.setProperty("server.port", port);
-
-        // 存储在用户主目录下的隐藏文件夹
-        File configFile = new File(System.getProperty("user.home"), ".atten_desktop/config.properties");
-        configFile.getParentFile().mkdirs();
-
-        try (FileOutputStream out = new FileOutputStream(configFile)) {
-            props.store(out, "Server Configuration");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 }

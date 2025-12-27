@@ -140,7 +140,7 @@ public class BadgePrintController {
             // 2. 构造跳转地址
             // 后端 go-print 接口会自动 redirect 到 badge_print.html
             String jumpUrl = AppConstants.getGotoPrintAPI() + "?ticket=" + ticket;
-
+            System.out.println(jumpUrl);
             // 3. 打开浏览器
             if (java.awt.Desktop.isDesktopSupported()) {
                 java.awt.Desktop.getDesktop().browse(new java.net.URI(jumpUrl));

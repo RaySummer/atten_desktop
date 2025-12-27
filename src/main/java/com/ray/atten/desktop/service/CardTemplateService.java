@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 public class CardTemplateService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private static final String BASE_URL = "http://localhost:8821/api/card-template";
 
     /**
      * 获取所有激活的模板列表 (供下拉菜单选择)
@@ -37,7 +36,6 @@ public class CardTemplateService {
      * 对应后端: @PostMapping("/prepare-print")
      */
     public String createPrintTicket(String templateUuid, List<OaEmployee> employees) throws IOException {
-        String url = BASE_URL + "/prepare-print";
 
         // 1. 核心优化点：在此处进行数据转换
         List<String> employeeIds = employees.stream().map(employee -> employee.getUuid() + "").collect(Collectors.toList());
@@ -50,6 +48,6 @@ public class CardTemplateService {
         String json = objectMapper.writeValueAsString(requestBody);
 
         // 3. 发送 POST 并直接返回 ticket 字符串
-        return HttpClientUtil.doPost(url, json);
+        return HttpClientUtil.doPost(AppConstants.getPreparePrintAPI(), json);
     }
 }
