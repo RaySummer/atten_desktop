@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Data
@@ -13,7 +14,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class AttendanceGroup implements Serializable {
 
-    private Long id;
+    private UUID uuid;
     private String groupName;
     private List<String> deviceSns;
 

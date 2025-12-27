@@ -64,6 +64,8 @@ public class EmployeeListController {
     private ChoiceBox<String> statusChoiceBox;
     @FXML
     private Button batchSyncButton;
+    @FXML
+    private Button printBadgeButton;
 
     // --- TableView 相關控件 ---
     private TableView<OaEmployee> employeeTable;
@@ -130,6 +132,14 @@ public class EmployeeListController {
                     ((SyncGroupController) controller).setEmployeesToSync(Collections.singletonList((OaEmployee) data));
                 }
                 ((SyncGroupController) controller).setOnCloseRequest(this::closeDrawer);
+            }// --- 新增：处理工牌打印视图 ---
+            else if (controller instanceof BadgePrintController) {
+                if (data instanceof List) {
+                    ((BadgePrintController) controller).setSelectedEmployees((List<OaEmployee>) data);
+                } else {
+                    ((BadgePrintController) controller).setSelectedEmployees(Collections.singletonList((OaEmployee) data));
+                }
+                ((BadgePrintController) controller).setOnCloseRequest(this::closeDrawer);
             }
 
             detailContainer.getChildren().setAll(node);
@@ -211,6 +221,18 @@ public class EmployeeListController {
             return;
         }
         openViewInDrawer("/view/SyncGroupView.fxml", new ArrayList<>(selected));
+    }
+
+    // --- 实现按钮点击事件 ---
+    @FXML
+    private void handlePrintBadge() {
+        ObservableList<OaEmployee> selected = employeeTable.getSelectionModel().getSelectedItems();
+        if (selected.isEmpty()) {
+            CustomAlertDialog.showWarning(null, "请选择至少一位员工。");
+            return;
+        }
+        // 打开工牌打印设置页面
+        openViewInDrawer("/view/BadgePrintView.fxml", new ArrayList<>(selected));
     }
 
     // =========================================================================

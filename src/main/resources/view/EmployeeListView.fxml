@@ -26,6 +26,8 @@
                     <Button onAction="#handleSearch" styleClass="accent-button" text="查询" />
 
                     <Button fx:id="batchSyncButton" alignment="CENTER_LEFT" onAction="#handleBatchSynchronize" styleClass="accent-button" text="批量同步" />
+
+                    <Button fx:id="printBadgeButton" onAction="#handlePrintBadge" styleClass="accent-button" text="打印工牌" />
                 </children>
             </HBox>
 
@@ -53,6 +55,7 @@
                   AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                 <children>
                     <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="drawer-header">
+                        <Label fx:id="drawerTitleLabel" text="详情" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
                     </HBox>
 
                     <StackPane fx:id="detailContainer" VBox.vgrow="ALWAYS">

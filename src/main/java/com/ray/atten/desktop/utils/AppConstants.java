@@ -144,6 +144,28 @@ public class AppConstants {
     }
 
     /**
+     * 获取打印模板
+     */
+    public static String getCardTemplatesAPI() {
+        return API_BASE_URL + "/api/card-template/list-active";
+    }
+
+
+    /**
+     * 获取打印凭证
+     */
+    public static String getPreparePrintAPI() {
+        return API_BASE_URL + "/api/card-template/prepare-print";
+    }
+
+    /**
+     * 从浏览器打开打印页面
+     */
+    public static String getGotoPrintAPI() {
+        return API_BASE_URL + "/badge_print.html";
+    }
+
+    /**
      * 检查客户端是否有新版本
      */
     public static String getApiVersionCheck(String currentVersion) {

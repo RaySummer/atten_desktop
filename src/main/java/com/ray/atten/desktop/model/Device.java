@@ -5,13 +5,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Device implements Serializable {
 
-    private Long id;
+    private UUID uuid;
 
     // 考勤机序列号 (唯一标识)
     private String deviceSn;
