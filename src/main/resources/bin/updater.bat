@@ -1,59 +1,47 @@
 @echo off
 setlocal enabledelayedexpansion
 
-@echo off
-:: è‡ªåŠ¨è¯·æ±‚ç®¡ç†å‘˜æƒé™
+:: 1. ×Ô¶¯ÇëÇó¹ÜÀíÔ±È¨ÏŞ (¾²Ä¬Ìø×ª)
 >nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
 if '%errorlevel%' NEQ '0' (
-    echo è¯·æ±‚ç®¡ç†å‘˜æƒé™...
-    goto UACPrompt
-) else ( goto gotAdmin )
-:UACPrompt
     echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
-    echo UAC.ShellExecute "%~s0", "%*", "", "runas", 1 >> "%temp%\getadmin.vbs"
+    :: ÕâÀïµÄ 0 ±íÊ¾Òş²ØĞÂ¿ªÆôµÄ¹ÜÀíÔ±´°¿Ú
+    echo UAC.ShellExecute "cmd.exe", "/c %~s0 ""%~1"" ""%~2"" ""%~3""", "", "runas", 0 >> "%temp%\getadmin.vbs"
     "%temp%\getadmin.vbs"
-    exit /B
-:gotAdmin
-    if exist "%temp%\getadmin.vbs" ( del "%temp%\getadmin.vbs" )
-    pushd "%CD%"
-    CD /D "%~dp0"
+    del /f /q "%temp%\getadmin.vbs" >nul 2>&1
+    exit /b
+)
 
-:: æ¥æ”¶ Java ä¼ è¿‡æ¥çš„å‚æ•°
-:: %1 = æ–°åŒ…è·¯å¾„, %2 = ç›®æ ‡ app ç›®å½•, %3 = åŸ Jar æ–‡ä»¶å
-set "NEW_FILE=%~1"
-set "TARGET_DIR=%~2"
-set "TARGET_NAME=%~3"
+:: --- ¹ÜÀíÔ±¾²Ä¬ÇøÓò ---
+:: ÇĞ»»±àÂëÒÔÖ§³ÖÖĞÎÄÂ·¾¶´¦Àí
+chcp 936 >nul
 
-:: 1. å½»åº•æ€æ­» Java è¿›ç¨‹ï¼Œç¡®ä¿æ–‡ä»¶é”è¢«é‡Šæ”¾
+set "SRC=%~1"
+set "DEST_DIR=%~2"
+set "DEST_NAME=%~3"
+
+:: 2. Ç¿ÖÆ½áÊø½ø³Ì
 taskkill /f /im javaw.exe /t >nul 2>&1
-taskkill /f /im AttenDesktop* /t >nul 2>&1
+taskkill /f /im AttenDesktop.exe /t >nul 2>&1
+:: Áô³ö 2 ÃëµÈ´ı¾ä±úÊÍ·Å
 timeout /t 2 /nobreak >nul
 
-:: 2. è¿›å…¥ç›®æ ‡ç›®å½•å¹¶å¼ºåˆ¶åˆ é™¤æ—§ Jar
-cd /d "!TARGET_DIR!"
-if exist "!TARGET_NAME!" (
-    del /f /q "!TARGET_NAME!"
+:: 3. Ö´ĞĞÎïÀíÌæ»»
+if exist "!SRC!" (
+    copy /y "!SRC!" "!DEST_DIR!\!DEST_NAME!" >nul 2>&1
+    if !errorlevel! equ 0 (
+        :: Ìæ»»³É¹¦ºóÇåÀíÁÙÊ±°ü
+        del /f /q "!SRC!" >nul 2>&1
+    )
 )
 
-:: 3. è¦†ç›–æ–‡ä»¶ï¼šå°† update_new.jar å˜æˆ TARGET_NAME (å¦‚ atten_desktop-latest.jar)
-copy /Y "!NEW_FILE!" "!TARGET_NAME!"
-
-:: 4. å†æ¬¡æ£€æŸ¥æ˜¯å¦è¦†ç›–æˆåŠŸ (å¯é€‰å¢å¼º)
-if not exist "!TARGET_NAME!" (
-    echo é”™è¯¯ï¼šæ–‡ä»¶è¦†ç›–å¤±è´¥ï¼
-    pause
-    exit
+:: 4. ×Ô¶¯ÖØÆô³ÌĞò
+if exist "!DEST_DIR!\!DEST_NAME!" (
+    cd /d "!DEST_DIR!"
+    cd ..
+    for %%i in (AttenDesktop*.exe) do (
+        start "" "%%i"
+        exit
+    )
 )
-
-:: 5. æ¸…ç†ä¸´æ—¶æ–‡ä»¶
-del /q "!NEW_FILE!"
-
-:: 6. è¿”å›æ ¹ç›®å½•é‡å¯ EXE
-cd /d ".."
-for %%i in (AttenDesktop*.exe) do (
-    start "" "%%i"
-    goto EXIT_SCRIPT
-)
-
-:EXIT_SCRIPT
 exit

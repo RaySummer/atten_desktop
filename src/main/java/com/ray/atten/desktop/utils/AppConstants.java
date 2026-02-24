@@ -20,6 +20,8 @@ public class AppConstants {
             Properties props = new Properties();
             props.load(AppConstants.class.getResourceAsStream("/version.properties"));
             CURRENT_VERSION = props.getProperty("app.version");
+
+            ConfigRepo.saveVersion(CURRENT_VERSION);
         } catch (Exception e) {
             CURRENT_VERSION = "1.0.0"; // 兜底
         }
@@ -105,7 +107,7 @@ public class AppConstants {
     /**
      * 員工查詢
      */
-    public static String    getEmployeeSearchAPI() {
+    public static String getEmployeeSearchAPI() {
         return API_BASE_URL + "/api/oa-employees/query";
     }
 
@@ -176,8 +178,8 @@ public class AppConstants {
     /**
      * 检查客户端是否有新版本
      */
-    public static String getApiVersionCheck(String currentVersion) {
-        return API_BASE_URL + "/api/version/check?currentVersion=" + currentVersion;
+    public static String getApiVersionCheck() {
+        return API_BASE_URL + "/api/version/check";
     }
 
 

@@ -16,6 +16,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Properties;
 
 public class Main extends Application {
@@ -30,7 +31,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-
+        Locale.setDefault(Locale.CHINESE);
         // 1. 尝试读取本地配置
         Properties props = ConfigRepo.loadConfig();
         String protocol = props.getProperty("server.protocol");

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.ray.atten.desktop.utils.AppConstants;
+import com.ray.atten.desktop.utils.ConfigRepo;
 import com.ray.atten.desktop.utils.CustomAlertDialog;
 import com.ray.atten.desktop.utils.HttpClientUtil;
 import javafx.application.Platform;
@@ -26,10 +27,7 @@ public class SysAppVersionService {
 
     public SysAppVersionService() {
         this.objectMapper = new ObjectMapper();
-
-        // 【核心修正】註冊 JSR310 模塊來處理 Java 8 日期時間
         this.objectMapper.registerModule(new JavaTimeModule());
-
     }
 
     /**
@@ -39,14 +37,9 @@ public class SysAppVersionService {
         Map<String, String> params = new HashMap<>();
         params.put("currentVersion", currentVersion);
 
-        String baseUrl = AppConstants.API_BASE_URL + "/api/version/check";
-        // 使用你的 HttpClientUtil 获取字符串
-        String responseJson = HttpClientUtil.doGet(baseUrl, params);
+        String responseJson = HttpClientUtil.doGet(AppConstants.getApiVersionCheck(), params);
 
-        // 使用 ObjectMapper 解析
         JsonNode rootNode = objectMapper.readTree(responseJson);
-
-        // 校验状态
         if (!"200".equals(rootNode.get("status").asText())) {
             return null;
         }
@@ -56,20 +49,14 @@ public class SysAppVersionService {
             return null;
         }
 
-        // 将 content 转为 Map 返回给 Controller
         return objectMapper.convertValue(contentNode, new TypeReference<Map<String, Object>>() {
         });
     }
 
-
     /**
      * 创建下载任务
-     *
-     * @param relativeUrl 相对地址
-     * @return 返回 Task 对象，让 Controller 可以绑定进度条
      */
     public Task<File> createDownloadTask(String relativeUrl) {
-        // 拼接完整的下载 URL
         String baseUrl = AppConstants.API_BASE_URL;
         if (baseUrl.endsWith("/") && relativeUrl.startsWith("/")) {
             baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
@@ -87,29 +74,29 @@ public class SysAppVersionService {
                 conn.setConnectTimeout(10000);
                 conn.setReadTimeout(30000);
 
-                // 检查响应状态
-                int responseCode = conn.getResponseCode();
-                if (responseCode != HttpURLConnection.HTTP_OK) {
-                    throw new IOException("服务器响应异常，状态码: " + responseCode);
+                if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                    throw new IOException("服务器响应异常，状态码: " + conn.getResponseCode());
                 }
 
-                // 获取文件总大小 (需要中台设置 Content-Length)
                 long totalSize = conn.getContentLengthLong();
 
-                // --- 核心修复：使用系统临时目录 ---
-                String tempPath = System.getProperty("java.io.tmpdir");
-                File tempDir = new File(tempPath, "atten_update");
+                // --- 【核心修改开始】：修改下载存储路径 ---
+                // 不再使用 System.getProperty("java.io.tmpdir")
+                // 改为使用用户根目录，这与你的 ConfigRepo 存放位置保持一致，权限更稳定
+                String userHome = System.getProperty("user.home");
+                File tempDir = new File(userHome + File.separator + ".atten_desktop", "update_cache");
+
                 if (!tempDir.exists() && !tempDir.mkdirs()) {
-                    throw new IOException("无法创建临时目录: " + tempDir.getAbsolutePath());
+                    throw new IOException("无法创建下载目录: " + tempDir.getAbsolutePath());
                 }
 
                 File targetFile = new File(tempDir, "update_new.jar");
-                // 如果旧的更新残留文件存在，先删除
+                // --- 【核心修改结束】 ---
+
                 if (targetFile.exists()) {
                     targetFile.delete();
                 }
 
-                // 开始下载流处理
                 try (InputStream is = conn.getInputStream();
                      BufferedInputStream bis = new BufferedInputStream(is);
                      FileOutputStream fos = new FileOutputStream(targetFile)) {
@@ -119,21 +106,12 @@ public class SysAppVersionService {
                     long downloaded = 0;
 
                     while ((len = bis.read(buffer)) != -1) {
-                        if (isCancelled()) {
-                            fos.close();
-                            return null;
-                        }
-
+                        if (isCancelled()) return null;
                         fos.write(buffer, 0, len);
                         downloaded += len;
-
-                        // 更新进度条百分比
                         updateProgress(downloaded, totalSize);
-
-                        // 更新进度文字描述
-                        String status = String.format("%.2f MB / %.2f MB",
-                                downloaded / 1024.0 / 1024.0, totalSize / 1024.0 / 1024.0);
-                        updateMessage(status);
+                        updateMessage(String.format("%.2f MB / %.2f MB",
+                                downloaded / 1024.0 / 1024.0, totalSize / 1024.0 / 1024.0));
                     }
                 }
                 updateMessage("下载完成，准备安装...");
@@ -142,59 +120,38 @@ public class SysAppVersionService {
         };
     }
 
-    /**
-     * 执行更新脚本
-     * 此方法会计算路径、启动外部进程并关闭当前程序
-     */
-    public void executeUpdaterScript() {
+    public void executeUpdaterScript(String version) {
         try {
-            // 1. 定位下载好的临时文件
-            String tempPath = System.getProperty("java.io.tmpdir");
-            File tempNewJar = new File(tempPath, "atten_update/update_new.jar");
+            String userHome = System.getProperty("user.home");
+            File tempNewJar = new File(userHome + File.separator + ".atten_desktop" + File.separator + "update_cache", "update_new.jar");
 
-            if (!tempNewJar.exists()) {
-                throw new IOException("找不到已下载的更新包");
-            }
-
-            // 2. 获取程序运行根目录（EXE 所在目录）
-            String userDir = System.getProperty("user.dir");
-            File rootDir = new File(userDir);
-
-            // 3. 寻找 updater.bat
-            File batchFile = new File(rootDir, "updater.bat");
-            if (!batchFile.exists()) {
-                batchFile = new File(rootDir, "app/updater.bat"); // 兼容 app 目录下
-            }
-
-            if (!batchFile.exists()) {
-                throw new IOException("未找到 updater.bat，位置: " + rootDir.getAbsolutePath());
-            }
-
-            // 4. 【关键修正】获取当前 Jar 的信息
-            // 无论当前运行的是 1.0.2 还是 1.0.5，获取它的绝对路径和名字
             File currentJarFile = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
-            String jarDirectory = currentJarFile.getParent();
-            String currentJarName = currentJarFile.getName(); // 得到当前运行的真实文件名
+            File appDir = currentJarFile.getParentFile();
+            File batchFile = new File(appDir, "updater.bat");
 
-            // 5. 启动脚本
-            // 参数说明:
-            // %1: tempNewJar (下载好的 1.0.5 内容)
-            // %2: jarDirectory (app 目录)
-            // %3: currentJarName (目标文件名，可能是 atten_desktop-latest.jar)
-            ProcessBuilder pb = new ProcessBuilder(
-                    "cmd.exe", "/c", "start", "/min",
+            ConfigRepo.saveVersion(version);
+
+            // --- 核心修正：构建绝对纯净的命令行 ---
+            // 我们手动给参数套上引号，并使用 /K 而不是 /C
+            // /K 的作用是：如果执行失败，窗口会保持打开，不会消失！
+            String cmdCommand = String.format("cmd.exe /k \"\"%s\" \"%s\" \"%s\" \"%s\"\"",
                     batchFile.getAbsolutePath(),
                     tempNewJar.getAbsolutePath(),
-                    jarDirectory,
-                    currentJarName
-            );
+                    appDir.getAbsolutePath(),
+                    "atten_desktop-latest.jar");
 
-            pb.start();
+            System.out.println("准备执行: " + cmdCommand);
+
+            // 使用 Runtime 执行，这种方式在处理这种嵌套引号的 CMD 命令时有时比 ProcessBuilder 更稳
+            Runtime.getRuntime().exec(cmdCommand);
+
+            // 留出时间让 CMD 窗口弹出来
+            Thread.sleep(1000);
             System.exit(0);
 
         } catch (Exception e) {
             e.printStackTrace();
-            Platform.runLater(() -> CustomAlertDialog.showError("启动更新失败", e.getMessage()));
         }
     }
+
 }

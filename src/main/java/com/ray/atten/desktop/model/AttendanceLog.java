@@ -16,7 +16,6 @@ public class AttendanceLog implements Serializable {
     private String userPin;
     private String userName;
     private String deviceSn;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime verifyTime;
     private Integer status;
     private String verifyType;

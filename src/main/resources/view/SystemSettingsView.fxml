@@ -90,7 +90,7 @@
                             <VBox alignment="CENTER" spacing="20.0" AnchorPane.topAnchor="40.0"
                                   AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
                                 <children>
-                                    <Label text="考勤管理系统 v1.0.0" styleClass="about-title-label"/>
+                                    <Label text="考勤管理系统" styleClass="about-title-label"/>
 
                                     <VBox spacing="10.0" maxWidth="550.0">
                                         <TextFlow textAlignment="LEFT">

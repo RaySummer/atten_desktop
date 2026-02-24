@@ -7,29 +7,33 @@ import java.io.IOException;
 import java.util.Properties;
 
 public class ConfigRepo {
-    // 存储在用户目录下，例如 C:\Users\YourName\.atten_desktop\server.properties
     private static final String CONFIG_DIR = System.getProperty("user.home") + File.separator + ".atten_desktop";
     private static final String CONFIG_FILE = CONFIG_DIR + File.separator + "server.properties";
 
-    public static void saveConfig(String protocol, String host, String port, String theme) {
-        Properties props = new Properties();
-        props.setProperty("server.protocol", protocol);
-        props.setProperty("server.host", host);
-        props.setProperty("server.port", port);
-        props.setProperty("ui.theme", theme); // 保存主题
-
+    /**
+     * 核心保存逻辑（私有化，统一入口）
+     * 采用 synchronized 确保多线程环境下（如异步更新任务和UI操作同时进行）配置文件的安全写入
+     */
+    private static synchronized void storeProperties(Properties props, String comment) {
         try {
             File dir = new File(CONFIG_DIR);
-            if (!dir.exists()) dir.mkdirs();
-
+            if (!dir.exists() && !dir.mkdirs()) {
+                System.err.println("无法创建配置目录: " + CONFIG_DIR);
+                return;
+            }
             try (FileOutputStream out = new FileOutputStream(CONFIG_FILE)) {
-                props.store(out, "Server Configuration");
+                props.store(out, comment);
+                // 强制刷新到底层设备，确保在进程被 kill 前数据已落盘
+                out.getFD().sync();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("配置文件保存失败: " + e.getMessage());
         }
     }
 
+    /**
+     * 加载配置（统一入口）
+     */
     public static Properties loadConfig() {
         Properties props = new Properties();
         File file = new File(CONFIG_FILE);
@@ -37,29 +41,64 @@ public class ConfigRepo {
             try (FileInputStream in = new FileInputStream(file)) {
                 props.load(in);
             } catch (IOException e) {
-                e.printStackTrace();
+                System.err.println("配置文件加载失败: " + e.getMessage());
             }
         }
         return props;
     }
 
-    // 新增：专门用于只保存主题的方法（在设置界面切换时调用）
+    // --- 业务方法 ---
+
+    /**
+     * 全量保存配置（用于初始化设置页面）
+     */
+    public static void saveConfig(String protocol, String host, String port, String theme, String version) {
+        Properties props = loadConfig(); // 基于现有配置修改，防止丢失未提及的字段
+        props.setProperty("server.protocol", protocol != null ? protocol : "http://");
+        props.setProperty("server.host", host != null ? host : "");
+        props.setProperty("server.port", port != null ? port : "80");
+        props.setProperty("ui.theme", theme != null ? theme : "light");
+        props.setProperty("app.version", version != null ? version : AppConstants.CURRENT_VERSION);
+
+        storeProperties(props, "Full Configuration Update");
+    }
+
+    /**
+     * 重载旧方法，适配原有 Controller 调用
+     */
+    public static void saveConfig(String protocol, String host, String port, String theme) {
+        saveConfig(protocol, host, port, theme, getVersion());
+    }
+
+    /**
+     * 极简更新：只更新版本号（更新脚本专用）
+     */
+    public static void saveVersion(String version) {
+        Properties props = loadConfig();
+        props.setProperty("app.version", version);
+        storeProperties(props, "Version Updated by Updater");
+    }
+
+    /**
+     * 极简更新：只更新主题
+     */
     public static void saveTheme(String theme) {
         Properties props = loadConfig();
         props.setProperty("ui.theme", theme);
-        try {
-            File dir = new File(CONFIG_DIR);
-            if (!dir.exists()) dir.mkdirs();
-            try (FileOutputStream out = new FileOutputStream(CONFIG_FILE)) {
-                props.store(out, "UI Theme Configuration");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        storeProperties(props, "Theme Updated");
     }
 
-    // 新增：便捷获取当前主题
+    /**
+     * 获取版本（带默认值）
+     */
+    public static String getVersion() {
+        return loadConfig().getProperty("app.version", AppConstants.CURRENT_VERSION);
+    }
+
+    /**
+     * 获取主题（带默认值）
+     */
     public static String getTheme() {
-        return loadConfig().getProperty("ui.theme", "light"); // 默认亮色
+        return loadConfig().getProperty("ui.theme", "light");
     }
 }

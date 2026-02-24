@@ -209,11 +209,11 @@ public class MainController {
 
         // 用户点击了“确认”按钮
         if (confirmed) {
-            startDownloadTask(relativeUrl);
+            startDownloadTask(version, relativeUrl);
         }
     }
 
-    private void startDownloadTask(String relativeUrl) {
+    private void startDownloadTask(String version, String relativeUrl) {
         try {
             // 1. 加载弹窗
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/component/DownloadProgressView.fxml"));
@@ -246,7 +246,7 @@ public class MainController {
             downloadTask.setOnSucceeded(e -> {
                 Platform.runLater(() -> {
                     progressStage.close(); // 确保关闭
-                    versionService.executeUpdaterScript(); // 启动脚本
+                    versionService.executeUpdaterScript(version); // 启动脚本
                 });
             });
 
