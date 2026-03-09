@@ -1,6 +1,7 @@
 package com;
 
 import com.ray.atten.desktop.config.AppConfig;
+import com.ray.atten.desktop.service.AuthService;
 import com.ray.atten.desktop.utils.AppConstants;
 import com.ray.atten.desktop.utils.ConfigRepo;
 import com.ray.atten.desktop.utils.NetworkUtil;
@@ -14,6 +15,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -32,35 +34,49 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         Locale.setDefault(Locale.CHINESE);
-        // 1. 尝试读取本地配置
         Properties props = ConfigRepo.loadConfig();
-        String protocol = props.getProperty("server.protocol");
         String host = props.getProperty("server.host");
-        String portText = props.getProperty("server.port");
 
-        // 2. 判断是否有旧配置且能连接成功
-        if (host != null && !host.isEmpty()) {
-            int port = Integer.parseInt(portText);
-            // 注意：这里的 checkConnection 是阻塞的，JDK 8 启动时允许短时间阻塞
-            if (NetworkUtil.checkConnection(protocol.replace("://", ""), host, port)) {
-                // 连接成功：更新常量并直接进入主界面
+        // 第一步：检查服务器配置
+        if (StringUtils.hasText(host)) {
+            String protocol = props.getProperty("server.protocol");
+            String portText = props.getProperty("server.port");
+
+            if (NetworkUtil.checkConnection(protocol.replace("://", ""), host, Integer.parseInt(portText))) {
                 AppConstants.updateApiBaseUrl(protocol, host, portText);
-                showView(primaryStage, "/view/MainView.fxml");
+
+                // 2. 尝试自动登录
+                String localToken = ConfigRepo.getToken();
+                AuthService authService = springContext.getBean(AuthService.class);
+
+                if (authService.checkTokenAndLogin(localToken)) {
+                    // Token 有效，直接进主界面
+                    showView(primaryStage, "/view/MainView.fxml", "主界面");
+                } else {
+                    // Token 失效或不存在，进登录界面
+                    showView(primaryStage, "/view/LoginView.fxml", "系统登录");
+                }
+
                 return;
             }
         }
 
-        // 3. 如果没配置或连接失败，进入设置界面
-        showView(primaryStage, "/view/ServerSetupView.fxml");
+        // 第三步：服务器不通，去设置界面
+        showView(primaryStage, "/view/ServerSetupView.fxml", "服务器配置");
     }
 
-    private void showView(Stage stage, String path) {
+    private void showView(Stage stage, String path, String title) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(path));
             loader.setControllerFactory(springContext::getBean); // 关键：Spring 注入
             Parent root = loader.load();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
+            // 如果已经有 Scene 就换 Root，没有就新建（防止重复创建 Stage）
+            if (stage.getScene() == null) {
+                Scene scene = new Scene(root);
+                stage.setScene(scene);
+            } else {
+                stage.getScene().setRoot(root);
+            }
 
             String iconPath = "/images/logo-50.png"; // 请务必确认此路径与 resources 下一致
             var is50 = getClass().getResourceAsStream(iconPath);
@@ -74,7 +90,7 @@ public class Main extends Application {
             }
 
             stage.initStyle(StageStyle.TRANSPARENT); // 隱藏操作系統的標題欄按鈕，顯得更簡潔
-            stage.setTitle("考勤系统 - 服务器配置");
+            stage.setTitle(title);
             stage.show();
         } catch (IOException e) {
             e.printStackTrace();

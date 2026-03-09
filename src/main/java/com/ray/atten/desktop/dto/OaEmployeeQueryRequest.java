@@ -19,4 +19,6 @@ public class OaEmployeeQueryRequest implements Serializable {
     private int pageSize = 10;
     private String sortBy;
     private String sortOrder = "DESC";
+    private Boolean hasFingerprint;
+    private Boolean hasPhoto;
 }

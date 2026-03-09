@@ -1,21 +1,20 @@
 package com.ray.atten.desktop.presentation.controller;
 
-import com.ray.atten.desktop.presentation.controller.component.CustomAlertDialogController;
 import com.ray.atten.desktop.presentation.controller.component.DownloadProgressController;
 import com.ray.atten.desktop.service.SysAppVersionService;
-import com.ray.atten.desktop.utils.AppConstants;
-import com.ray.atten.desktop.utils.ConfigRepo;
-import com.ray.atten.desktop.utils.CustomAlertDialog;
-import com.ray.atten.desktop.utils.LoadingManager;
+import com.ray.atten.desktop.utils.*;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -41,11 +40,19 @@ public class MainController {
     @FXML
     private Button btnAttendance;
     @FXML
+    private Button btnAdminList;
+    @FXML
+    private Button btnCompany;
+    @FXML
     private Button btnDevice;
     @FXML
     private Button btnSettings;
     @FXML
     private StackPane rootStackPane; // 注入根容器
+    @FXML
+    private Label lblAdminName;
+    @FXML
+    private VBox adminMenuSection;
 
     @Autowired
     private ConfigurableApplicationContext springContext;
@@ -61,6 +68,17 @@ public class MainController {
 
     @FXML
     public void initialize() {
+        // 设置姓名
+        lblAdminName.setText(SessionContext.getUsername());
+
+        //todo: 增加注销按钮，修改登录界面的样式
+
+        // 核心：根据登录时保存的角色决定是否显示管理菜单
+        if (SessionContext.IsSuperAdmin()) {
+            adminMenuSection.setVisible(true);
+            adminMenuSection.setManaged(true);
+        }
+
         // 将根容器交给管理器，管理器会加载 LoadingView 并放置在最上层
         loadingManager.init(rootStackPane);
         // 1. 实现拖拽
@@ -155,7 +173,7 @@ public class MainController {
      * 统一管理按钮的高亮状态
      */
     private void updateActiveButton(Button clickedButton) {
-        Button[] navButtons = {btnEmployee, btnAttendance, btnDevice, btnSettings};
+        Button[] navButtons = {btnEmployee, btnAttendance, btnDevice, btnSettings, btnAdminList, btnCompany};
         for (Button btn : navButtons) {
             if (btn != null) {
                 btn.getStyleClass().remove("active");
@@ -271,6 +289,43 @@ public class MainController {
 
         } catch (IOException e) {
             CustomAlertDialog.showError("加载失败", "无法启动下载窗口");
+        }
+    }
+
+    @FXML
+    private void showAdminListView() {
+        loadView("/view/AdminListView.fxml");
+        updateActiveButton(btnAdminList);
+    }
+
+    @FXML
+    private void showCompanyView() {
+        loadView("/view/DeviceManagementView.fxml");
+        updateActiveButton(btnCompany);
+    }
+
+    @FXML
+    private void handleLogout(ActionEvent event) {
+        // 1. 弹出确认框（可选，增加用户体验）
+        boolean confirm = CustomAlertDialog.showConfirmation("确认注销", "您确定要注销当前登录状态吗？");
+        if (!confirm) return;
+
+        // 2. 清除内存中的会话信息
+        SessionContext.logout();
+
+        // 3. 清除本地持久化的 Token，防止下次启动自动登录
+        ConfigRepo.saveToken(null);
+
+        // 4. 跳转回登录界面
+        try {
+            // 获取当前窗口
+            Stage stage = (Stage) rootStackPane.getScene().getWindow();
+
+            // 使用 ViewManager 进行切换
+            ViewManager.switchView(stage, "/view/LoginView.fxml", springContext, "系统登录");
+
+        } catch (Exception e) {
+            CustomAlertDialog.showError("错误", "注销失败，请重启程序");
         }
     }
 }

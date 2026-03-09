@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.ray.atten.desktop.presentation.controller.LoginController"
+      prefWidth="400.0" prefHeight="350.0" styleClass="setup-container">
+
+    <padding>
+        <Insets bottom="30.0" left="50.0" right="50.0" top="30.0" />
+    </padding>
+
+    <Label text="系统登录" styleClass="header-label" />
+
+    <HBox spacing="10.0" alignment="CENTER_LEFT">
+        <Label text="账号:" prefWidth="50.0" styleClass="normal-label" />
+        <TextField fx:id="txtUsername" HBox.hgrow="ALWAYS" promptText="请输入用户名" styleClass="custom-text-field" />
+    </HBox>
+
+    <HBox spacing="10.0" alignment="CENTER_LEFT">
+        <Label text="密码:" prefWidth="50.0" styleClass="normal-label" />
+        <PasswordField fx:id="txtPassword" HBox.hgrow="ALWAYS" promptText="请输入密码" styleClass="custom-text-field" />
+    </HBox>
+
+    <VBox spacing="10.0" alignment="CENTER">
+        <Button fx:id="btnLogin" text="登 录" onAction="#onLoginAction"
+                prefWidth="220.0" styleClass="accent-button" />
+
+        <Hyperlink text="修改服务器配置" onAction="#handleBackToSetup" styleClass="muted-label" style="-fx-font-size: 11px;"/>
+    </VBox>
+
+    <Label fx:id="statusLabel" text="请登录以继续使用" wrapText="true" alignment="CENTER" styleClass="muted-label" />
+
+</VBox>

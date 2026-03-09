@@ -145,7 +145,7 @@ public class ServerSetupController {
             // 只要是当前窗口的一个控件即可，这里假设用 protocolCombo
             Stage stage = (Stage) protocolCombo.getScene().getWindow();
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/MainView.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/LoginView.fxml"));
             // 这里的 springContext 需要在 Controller 中 @Autowired 注入
             loader.setControllerFactory(springContext::getBean);
 

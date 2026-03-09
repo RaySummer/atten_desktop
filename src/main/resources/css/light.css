@@ -544,3 +544,37 @@
     -fx-text-fill: -fx-text-main !important;
     -fx-fill: -fx-text-main !important;
 }
+
+/* ListView 样式 (你的 styleClass="custom-table-view") */
+.custom-list-view {
+    -fx-background-color: #ffffff;
+    -fx-background-insets: 0;
+    -fx-border-color: #dcdde1;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+/* 列表项样式 */
+.custom-list-view .list-cell {
+    -fx-padding: 8 12;
+    -fx-text-fill: #2f3640;
+    -fx-background-color: transparent;
+    -fx-border-color: #f1f2f6;
+    -fx-border-width: 0 0 1 0; /* 仅底部边框，实现分割线 */
+}
+
+/* 悬停与选中状态 */
+.custom-list-view .list-cell:hover {
+    -fx-background-color: #f5f6fa;
+}
+
+.custom-list-view .list-cell:selected {
+    -fx-background-color: #3498db;
+    -fx-text-fill: white;
+}
+
+/* 复选框样式 */
+.custom-check-box {
+    -fx-text-fill: #2c3e50;
+}

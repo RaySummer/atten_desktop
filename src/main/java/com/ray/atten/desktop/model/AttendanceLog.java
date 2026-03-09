@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AttendanceLog implements Serializable {
+public class AttendanceLog extends BaseModel implements Serializable {
 
     private String userPin;
     private String userName;

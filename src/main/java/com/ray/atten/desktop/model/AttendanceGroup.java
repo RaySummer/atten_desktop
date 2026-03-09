@@ -12,9 +12,8 @@ import java.util.stream.Collectors;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AttendanceGroup implements Serializable {
+public class AttendanceGroup extends BaseModel implements Serializable {
 
-    private UUID uuid;
     private String groupName;
     private List<String> deviceSns;
 

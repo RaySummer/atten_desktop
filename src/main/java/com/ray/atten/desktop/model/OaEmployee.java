@@ -1,6 +1,5 @@
 package com.ray.atten.desktop.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,9 +11,8 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class OaEmployee implements Serializable {
+public class OaEmployee extends BaseModel implements Serializable {
 
-    private UUID uuid;
     private String pin;
     private String name;
     private String company;
@@ -25,8 +23,6 @@ public class OaEmployee implements Serializable {
     private String officeLocation;
 
     private LocalDateTime entryDate;
-    private LocalDateTime createTime;
-    private LocalDateTime updateTime;
 
     private String fingerprint;
 

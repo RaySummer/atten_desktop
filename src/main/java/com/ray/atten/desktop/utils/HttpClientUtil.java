@@ -1,8 +1,6 @@
 package com.ray.atten.desktop.utils;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.*;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -19,6 +17,20 @@ public class HttpClientUtil {
     }
 
     /**
+     * 统一为请求添加 Header
+     */
+    private static void setCommonHeaders(HttpRequestBase request) {
+        request.setHeader("Accept", AppConstants.MIME_TYPE_APPLICATION_JSON);
+        request.setHeader("Content-Type", AppConstants.MIME_TYPE_APPLICATION_JSON);
+
+        // 关键点：如果 SessionContext 中有 Token，则自动注入 Header
+        String token = SessionContext.getToken();
+        if (token != null && !token.isEmpty()) {
+            request.setHeader("Authorization", "Bearer " + token);
+        }
+    }
+
+    /**
      * 發送 GET 請求，支持 URL 參數。
      * * @param baseUrl 基礎 URL (不帶參數), e.g., http://localhost:8080/api/employees
      *
@@ -28,26 +40,12 @@ public class HttpClientUtil {
      */
     public static String doGet(String baseUrl, Map<String, String> params) throws IOException {
         String fullUrl = buildUrlWithParams(baseUrl, params);
-
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpGet httpGet = new HttpGet(fullUrl);
-            httpGet.setHeader("Accept", AppConstants.MIME_TYPE_APPLICATION_JSON);
+            setCommonHeaders(httpGet); // 调用统一 Header 设置
 
             try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-                int statusCode = response.getStatusLine().getStatusCode();
-
-                if (response.getEntity() == null) {
-                    return ""; // 無響應體
-                }
-
-                String responseBody = EntityUtils.toString(response.getEntity(), AppConstants.DEFAULT_CHARSET);
-
-                if (statusCode >= 200 && statusCode < 300) {
-                    return responseBody;
-                } else {
-                    // 拋出異常，包含詳細的響應信息
-                    throw new IOException("HTTP GET 請求失敗，狀態碼: " + statusCode + ", 響應: " + responseBody);
-                }
+                return handleResponse(response);
             }
         }
     }
@@ -63,30 +61,32 @@ public class HttpClientUtil {
     public static String doPost(String url, String jsonBody) throws IOException {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpPost httpPost = new HttpPost(url);
-
-            httpPost.setHeader("Content-Type", AppConstants.MIME_TYPE_APPLICATION_JSON);
-            httpPost.setHeader("Accept", AppConstants.MIME_TYPE_APPLICATION_JSON);
+            setCommonHeaders(httpPost); // 调用统一 Header 设置
 
             if (jsonBody != null && !jsonBody.isEmpty()) {
-                StringEntity requestEntity = new StringEntity(jsonBody, AppConstants.DEFAULT_CHARSET);
-                httpPost.setEntity(requestEntity);
+                httpPost.setEntity(new StringEntity(jsonBody, AppConstants.DEFAULT_CHARSET));
             }
 
             try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-                int statusCode = response.getStatusLine().getStatusCode();
-
-                if (response.getEntity() == null) {
-                    return "";
-                }
-
-                String responseBody = EntityUtils.toString(response.getEntity(), AppConstants.DEFAULT_CHARSET);
-
-                if (statusCode >= 200 && statusCode < 300) {
-                    return responseBody;
-                } else {
-                    throw new IOException("HTTP POST 請求失敗，狀態碼: " + statusCode + ", 響應: " + responseBody);
-                }
+                return handleResponse(response);
             }
+        }
+    }
+
+    /**
+     * 提取公共的响应处理逻辑
+     */
+    private static String handleResponse(CloseableHttpResponse response) throws IOException {
+        int statusCode = response.getStatusLine().getStatusCode();
+        String responseBody = response.getEntity() != null ?
+                EntityUtils.toString(response.getEntity(), AppConstants.DEFAULT_CHARSET) : "";
+
+        if (statusCode >= 200 && statusCode < 300) {
+            return responseBody;
+        } else if (statusCode == 401 || statusCode == 403) {
+            throw new IOException("权限验证失败，请重新登录。");
+        } else {
+            throw new IOException("请求失败 [" + statusCode + "]: " + responseBody);
         }
     }
 
@@ -117,6 +117,32 @@ public class HttpClientUtil {
         }
 
         return urlBuilder.toString();
+    }
+
+    public static String doPut(String url, String jsonBody) throws Exception {
+        HttpPut httpPut = new HttpPut(url);
+        // 注入 Token
+        httpPut.setHeader("Authorization", "Bearer " + SessionContext.getToken());
+        httpPut.setHeader("Content-Type", "application/json;charset=utf-8");
+
+        if (jsonBody != null) {
+            httpPut.setEntity(new StringEntity(jsonBody, "UTF-8"));
+        }
+
+        try (CloseableHttpClient httpClient = HttpClients.createDefault();
+             CloseableHttpResponse response = httpClient.execute(httpPut)) {
+            return handleResponse(response); // 处理状态码并返回字符串
+        }
+    }
+
+    public static String doDelete(String url) throws Exception {
+        HttpDelete httpDelete = new HttpDelete(url);
+        httpDelete.setHeader("Authorization", "Bearer " + SessionContext.getToken());
+
+        try (CloseableHttpClient httpClient = HttpClients.createDefault();
+             CloseableHttpResponse response = httpClient.execute(httpDelete)) {
+            return handleResponse(response);
+        }
     }
 
 }

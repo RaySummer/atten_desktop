@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/8.0.171"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.ray.atten.desktop.presentation.controller.AdminDetailController"
+      prefHeight="600.0" prefWidth="450.0"
+      styleClass="main-content-pane"
+      spacing="15.0">
+
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
+    </padding>
+
+    <!--<HBox alignment="CENTER_LEFT" spacing="10.0">
+        <padding>
+            <Insets bottom="10.0"/>
+        </padding>
+        <Label text="基本信息" styleClass="normal-label" style="-fx-font-weight: bold;"/>
+    </HBox>-->
+
+    <VBox spacing="8.0">
+        <Label text="用户名:" styleClass="normal-label" />
+        <TextField fx:id="usernameField" promptText="请输入用户名" styleClass="custom-text-field" />
+    </VBox>
+
+    <HBox fx:id="modifyPasswordOption" alignment="CENTER_LEFT" spacing="10.0">
+        <padding>
+            <Insets top="5.0" bottom="5.0"/>
+        </padding>
+        <CheckBox fx:id="superAdminCheck" text="修改密码" styleClass="custom-check-box" />
+    </HBox>
+
+    <VBox fx:id="passwordSection" spacing="8.0" managed="false" visible="false">
+        <Label fx:id="passwordLabel" text="密码:" styleClass="normal-label" />
+        <PasswordField fx:id="passwordField" promptText="请输入新密码" styleClass="custom-text-field" />
+    </VBox>
+
+    <VBox VBox.vgrow="ALWAYS" spacing="8.0">
+        <HBox alignment="BOTTOM_LEFT">
+            <Label text="管辖公司清单:" styleClass="normal-label" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label text="(多选)" styleClass="muted-label" style="-fx-font-size: 11px;" />
+        </HBox>
+        <ListView fx:id="companyListView" VBox.vgrow="ALWAYS" styleClass="custom-list-view" />
+    </VBox>
+
+    <HBox alignment="CENTER_RIGHT" spacing="15.0" style="-fx-padding: 10 0 0 0;">
+        <Button text="取消" onAction="#handleCancel" prefWidth="80.0" styleClass="secondary-cancel-button" />
+        <Button fx:id="saveButton" text="保存用户信息" onAction="#handleSave"
+                prefWidth="150.0" styleClass="primary-confirm-button" />
+    </HBox>
+
+</VBox>

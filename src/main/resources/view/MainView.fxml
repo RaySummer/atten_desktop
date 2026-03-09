@@ -7,7 +7,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
 
-<StackPane fx:id="rootStackPane" prefHeight="720.0" prefWidth="1100.0" xmlns="http://javafx.com/javafx/8"
+<StackPane fx:id="rootStackPane" prefHeight="720.0" prefWidth="1300.0" xmlns="http://javafx.com/javafx/8"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.ray.atten.desktop.presentation.controller.MainController">
 
@@ -15,30 +15,12 @@
         <left>
             <VBox prefWidth="220.0" spacing="5.0" styleClass="sidebar">
                 <children>
-                    <!--<HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <VBox alignment="CENTER" spacing="10.0">
                         <VBox.margin>
-                            <Insets bottom="20.0" left="20.0" right="10.0" top="30.0" />
+                            <Insets bottom="10.0" top="30.0"/>
                         </VBox.margin>
                         <children>
-                            <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
-                                <image>
-                                    <Image url="@/images/logo_big.png" />
-                                </image>
-                            </ImageView>
-                            <Label text="考勤管理" styleClass="sidebar-title">
-                                <font>
-                                    <Font name="System Bold" size="18.0" />
-                                </font>
-                            </Label>
-                        </children>
-                    </HBox>-->
-
-                    <VBox alignment="CENTER" spacing="12.0">
-                        <VBox.margin>
-                            <Insets bottom="40.0" top="30.0"/>
-                        </VBox.margin>
-                        <children>
-                            <ImageView fitHeight="120.0" fitWidth="120.0" pickOnBounds="true" preserveRatio="true">
+                            <ImageView fitHeight="100.0" fitWidth="100.0" pickOnBounds="true" preserveRatio="true">
                                 <image>
                                     <Image url="@/images/logo_big.png"/>
                                 </image>
@@ -48,11 +30,27 @@
                                     <Font name="System Bold" size="16.0"/>
                                 </font>
                                 <style>
-                                    -fx-text-fill: white; /* 假设侧边栏是深色的 */
+                                    -fx-text-fill: white;
                                     -fx-opacity: 0.9;
-                                    -fx-letter-spacing: 2px;
                                 </style>
                             </Label>
+                        </children>
+                    </VBox>
+
+                    <VBox alignment="CENTER" spacing="5.0">
+                        <VBox.margin>
+                            <Insets bottom="25.0" />
+                        </VBox.margin>
+                        <children>
+                            <Label text="欢迎回来," style="-fx-text-fill: #aaaaaa; -fx-font-size: 11px;" />
+                            <HBox alignment="CENTER" spacing="8.0">
+                                <children>
+                                    <Label fx:id="lblAdminName" text="管理员"
+                                           style="-fx-text-fill: #2196F3; -fx-font-size: 14px; -fx-font-weight: bold;" />
+                                    <Hyperlink onAction="#handleLogout" text="[注销]"
+                                               style="-fx-text-fill: #ff6b6b; -fx-font-size: 11px; -fx-padding: 0; -fx-underline: false; -fx-border-color: transparent;" />
+                                </children>
+                            </HBox>
                         </children>
                     </VBox>
 
@@ -62,6 +60,26 @@
                             text=" 📅 考勤统计" styleClass="nav-button"/>
                     <Button fx:id="btnDevice" onAction="#showDeviceView" prefHeight="50.0" prefWidth="220.0"
                             text=" 🛠 设备管理" styleClass="nav-button"/>
+
+                    <VBox fx:id="adminMenuSection" visible="false" managed="false" spacing="5.0">
+                        <children>
+                            <Separator opacity="0.1">
+                                <VBox.margin>
+                                    <Insets left="20.0" right="20.0" top="10.0" bottom="10.0"/>
+                                </VBox.margin>
+                            </Separator>
+                            <Label text="系统管理" style="-fx-text-fill: #757575; -fx-font-size: 11px;">
+                                <VBox.margin>
+                                    <Insets left="25.0" bottom="5.0"/>
+                                </VBox.margin>
+                            </Label>
+                            <Button fx:id="btnAdminList" onAction="#showAdminListView" prefHeight="50.0" prefWidth="220.0"
+                                    text=" 🔑 管理员维护" styleClass="nav-button"/>
+<!--                            <Button fx:id="btnCompany" onAction="#showCompanyView" prefHeight="50.0" prefWidth="220.0"-->
+<!--                                    text=" 🏢 公司管理" styleClass="nav-button"/>-->
+                        </children>
+                    </VBox>
+
                     <Button fx:id="btnSettings" onAction="#showSettingView" prefHeight="50.0" prefWidth="220.0"
                             text=" ⚙ 系统设置" styleClass="nav-button"/>
 

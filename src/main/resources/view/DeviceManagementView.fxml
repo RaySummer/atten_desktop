@@ -42,7 +42,7 @@
                 visible="false" style="-fx-background-color: rgba(0,0,0,0.1);"
                 mouseTransparent="true">
         <children>
-            <VBox fx:id="drawerContent" prefWidth="550.0" styleClass="side-drawer"
+            <VBox fx:id="drawerContent" prefWidth="650.0" styleClass="side-drawer"
                   AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                 <children>
                     <StackPane fx:id="detailContainer" VBox.vgrow="ALWAYS">

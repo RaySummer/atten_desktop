@@ -182,6 +182,69 @@ public class AppConstants {
         return API_BASE_URL + "/api/version/check";
     }
 
+    /**
+     * 登录
+     */
+    public static String getLoginAPI() {
+        return API_BASE_URL + "/api/auth/login";
+    }
+
+    /**
+     * 验证token
+     */
+    public static String getValidateTokenAPI() {
+        return API_BASE_URL + "/api/auth/validate";
+    }
+
+    /**
+     * 增加管理员
+     */
+    public static String getAddAdminAPI() {
+        return API_BASE_URL + "/api/admin/users";
+    }
+
+    /**
+     * 删除管理员
+     */
+    public static String getDelAdminAPI(String uuid) {
+        return API_BASE_URL + "/api/admin/users/" + uuid;
+    }
+
+    /**
+     * 获取管理员列表
+     */
+    public static String getAdminListAPI() {
+        return API_BASE_URL + "/api/admin/users";
+    }
+
+    /**
+     * 修改管理员
+     */
+    public static String getUpdateAdminAPI(String uuid) {
+        return API_BASE_URL + "/api/admin/users/" + uuid + "/permissions";
+    }
+
+    /**
+     * 获取公司列表
+     */
+    public static String getCompanyListAPI() {
+        return API_BASE_URL + "/api/admin/companies";
+    }
+
+    /**
+     * 删除公司
+     */
+    public static String getDelCompanyAPI(String uuid) {
+        return API_BASE_URL + "/api/admin/companies/" + uuid;
+    }
+
+    /**
+     * 增加公司
+     */
+    public static String getAddCompanyAPI() {
+        return API_BASE_URL + "/api/admin/companies";
+    }
+
 
     public static String dateTimeFormatter(LocalDateTime dateTime, String formatType) {
         if (dateTime == null) {

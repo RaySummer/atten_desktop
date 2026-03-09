@@ -5,14 +5,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Device implements Serializable {
-
-    private UUID uuid;
+public class Device extends BaseModel implements Serializable {
 
     // 考勤机序列号 (唯一标识)
     private String deviceSn;
@@ -31,5 +30,7 @@ public class Device implements Serializable {
 
     // 是否激活/启用同步
     private Boolean active;
+
+    private List<UUID> companyUuids;
 
 }

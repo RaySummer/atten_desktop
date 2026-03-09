@@ -720,3 +720,43 @@
     -fx-font-size: 13px;
     -fx-font-style: italic;
 }
+
+/* ListView 样式 */
+.custom-list-view {
+    -fx-background-color: #252526;
+    -fx-border-color: #3e3e42;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+}
+
+/* 列表项样式 */
+.custom-list-view .list-cell {
+    -fx-padding: 8 12;
+    -fx-text-fill: #cccccc;
+    -fx-background-color: transparent;
+    -fx-border-color: #333333;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* 悬停与选中状态 */
+.custom-list-view .list-cell:hover {
+    -fx-background-color: #2a2d2e;
+}
+
+.custom-list-view .list-cell:selected {
+    -fx-background-color: #094771; /* 经典的 VS Code 深蓝色选中态 */
+    -fx-text-fill: #ffffff;
+}
+
+/* 复选框样式 */
+.custom-check-box {
+    -fx-text-fill: #cccccc;
+}
+
+/* 输入框在暗黑模式下的适配 */
+.custom-text-field {
+    -fx-background-color: #3c3c3c;
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: #888888;
+    -fx-border-color: #555555;
+}

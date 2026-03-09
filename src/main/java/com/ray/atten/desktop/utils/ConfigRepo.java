@@ -47,6 +47,26 @@ public class ConfigRepo {
         return props;
     }
 
+    /**
+     * 保存 Token
+     */
+    public static void saveToken(String token) {
+        Properties props = loadConfig();
+        if (token == null) {
+            props.remove("auth.token");
+        } else {
+            props.setProperty("auth.token", token);
+        }
+        storeProperties(props, "Token Updated");
+    }
+
+    /**
+     * 获取 Token
+     */
+    public static String getToken() {
+        return loadConfig().getProperty("auth.token");
+    }
+
     // --- 业务方法 ---
 
     /**
@@ -59,6 +79,8 @@ public class ConfigRepo {
         props.setProperty("server.port", port != null ? port : "80");
         props.setProperty("ui.theme", theme != null ? theme : "light");
         props.setProperty("app.version", version != null ? version : AppConstants.CURRENT_VERSION);
+
+        //todo: 添加token配置，打开界面时验证token是否存在和有效，否则重新登录
 
         storeProperties(props, "Full Configuration Update");
     }
