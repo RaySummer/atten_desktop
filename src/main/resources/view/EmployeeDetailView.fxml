@@ -7,7 +7,7 @@
 
 <VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.ray.atten.desktop.presentation.controller.EmployeeDetailController"
-      prefHeight="680.0" prefWidth="650.0"
+      prefHeight="800.0" prefWidth="650.0"
       styleClass="detail-root-pane"> <padding>
     <Insets bottom="25.0" left="30.0" right="30.0" top="30.0"/>
 </padding>
@@ -28,6 +28,18 @@
                                 <ImageView fx:id="fingerprint1ImageView" fitHeight="200.0" fitWidth="180.0"
                                            onMouseClicked="#handleFingerprintClickToZoom"
                                            pickOnBounds="true" preserveRatio="true"/>
+                            </StackPane>
+                        </children>
+                    </VBox>
+                    <VBox alignment="BOTTOM_CENTER" spacing="8.0">
+                        <children>
+                            <StackPane styleClass="selector-box-box" maxWidth="180" maxHeight="100">
+                                <VBox spacing="5.0">
+                                    <children>
+                                        <Label text="设备组:" styleClass="info-label" />
+                                        <StackPane fx:id="deviceGroupSelectorContainer" prefWidth="180.0" />
+                                    </children>
+                                </VBox>
                             </StackPane>
                         </children>
                     </VBox>
@@ -101,6 +113,9 @@
 
     <HBox alignment="CENTER_RIGHT" spacing="20.0" style="-fx-padding: 30 0 0 0;">
         <children>
+            <Button fx:id="syncButton" onAction="#handleSynchronize"
+                    text="同步" prefWidth="130.0" prefHeight="40.0"
+                    styleClass="primary-sync-button"/>
             <Button fx:id="confirmButton" onAction="#handleConfirm"
                     text="确定" prefWidth="130.0" prefHeight="40.0"
                     styleClass="primary-confirm-button"/>

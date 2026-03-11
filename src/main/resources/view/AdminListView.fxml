@@ -32,9 +32,9 @@
                 <columns>
                     <TableColumn fx:id="colUsername" text="用户名" prefWidth="150.0"/>
                     <TableColumn fx:id="colIsSuper" text="超级管理员" prefWidth="100.0"/>
-                    <TableColumn fx:id="colCompanies" text="管辖公司" prefWidth="500.0"/>
+                    <TableColumn fx:id="colCompanies" text="管辖公司" prefWidth="600.0"/>
                     <TableColumn fx:id="colCreateTime" text="创建时间" prefWidth="200.0"/>
-                    <TableColumn fx:id="colAction" text="操作" prefWidth="100.0" />
+                    <TableColumn fx:id="colAction" text="操作" prefWidth="200.0" />
                 </columns>
             </TableView>
 

@@ -361,6 +361,15 @@
 }
 
 /* 底部确定按钮 */
+.primary-sync-button {
+    -fx-background-color: #cc8800;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+}
+
+/* 底部确定按钮 */
 .primary-confirm-button {
     -fx-background-color: #0062cc;
     -fx-text-fill: white;

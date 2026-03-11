@@ -5,11 +5,12 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
+<?import javafx.scene.layout.StackPane?>
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.ray.atten.desktop.presentation.controller.SyncGroupController"
       fx:id="rootPane"
-      prefHeight="400.0" prefWidth="700.0"
+      prefHeight="500.0" prefWidth="700.0"
       styleClass="main-content-pane">
     <padding>
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
@@ -20,7 +21,9 @@
             <Insets top="15.0"/>
         </padding>
         <Label text="选择目标设备组:" styleClass="normal-label"/>
-        <ComboBox fx:id="groupComboBox" prefWidth="250.0" promptText="请选择一个设备组" styleClass="custom-combo-box"/>
+
+        <StackPane fx:id="groupSelectorContainer" prefWidth="250.0" />
+
         <HBox HBox.hgrow="ALWAYS" alignment="CENTER_RIGHT">
             <Button fx:id="confirmButton" text="确定同步" onAction="#handleConfirmSync" disable="true"
                     styleClass="accent-button"/>
@@ -30,7 +33,7 @@
         <padding>
             <Insets top="15.0"/>
         </padding>
-        <TableView fx:id="employeeTableView" prefHeight="300.0" VBox.vgrow="ALWAYS" styleClass="custom-table-view">
+        <TableView fx:id="employeeTableView" prefHeight="400.0" VBox.vgrow="ALWAYS" styleClass="custom-table-view">
             <columns>
                 <TableColumn fx:id="rowNumberColumn" text="序号" prefWidth="50"/>
                 <TableColumn fx:id="pinColumn" text="工号" prefWidth="80"/>

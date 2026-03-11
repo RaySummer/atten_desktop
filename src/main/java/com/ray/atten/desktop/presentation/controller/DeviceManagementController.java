@@ -6,13 +6,17 @@ import com.ray.atten.desktop.service.DeviceService;
 import com.ray.atten.desktop.utils.CustomAlertDialog;
 import com.ray.atten.desktop.utils.LoadingManager;
 import javafx.animation.TranslateTransition;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
@@ -28,50 +32,33 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class DeviceManagementController {
 
     @Autowired
     private ApplicationContext springContext;
-
-    @FXML
-    private AnchorPane drawerPane;
-    @FXML
-    private VBox drawerContent;
-    @FXML
-    private StackPane detailContainer;
-    @FXML
-    private AnchorPane tableContainer;
-
-    @FXML
-    private TextField searchSn;
-    @FXML
-    private ComboBox<String> activeFilter;
-    @FXML
-    private Label statusLabel;
-    @FXML
-    private TableColumn<Device, Integer> rowNumberColumn;
-    @FXML
-    private TableColumn<Device, String> snCol;
-    @FXML
-    private TableColumn<Device, String> aliasCol;
-    @FXML
-    private TableColumn<Device, String> locCol;
-    @FXML
-    private TableColumn<Device, String> modelCol;
-    @FXML
-    private TableColumn<Device, String> ipCol;
-    @FXML
-    private TableColumn<Device, Boolean> activeCol;
-    @FXML
-    private TableView<Device> deviceTable;
-
     @Autowired
     private DeviceService deviceService;
-
     @Autowired
     private LoadingManager loadingManager;
+
+    @FXML private AnchorPane drawerPane;
+    @FXML private VBox drawerContent;
+    @FXML private StackPane detailContainer;
+    @FXML private AnchorPane tableContainer;
+
+    @FXML private TextField searchSn;
+    @FXML private ComboBox<String> activeFilter;
+    @FXML private Label statusLabel;
+
+    // --- TableView 相關 ---
+    private TableView<Device> deviceTable;
+    private TableColumn<Device, Boolean> selectColumn; // 替换原 rowNumberColumn
+    private TableColumn<Device, String> snCol, aliasCol, locCol, modelCol, ipCol;
+    private TableColumn<Device, Boolean> activeCol;
+    private CheckBox selectAllCheckBox;
 
     @FXML
     public void initialize() {
@@ -81,7 +68,6 @@ public class DeviceManagementController {
         activeFilter.setItems(FXCollections.observableArrayList("全部", "已激活", "未激活"));
         activeFilter.setValue("全部");
 
-        // 將表格裝載到容器
         tableContainer.getChildren().add(deviceTable);
         AnchorPane.setTopAnchor(deviceTable, 0.0);
         AnchorPane.setBottomAnchor(deviceTable, 0.0);
@@ -91,76 +77,28 @@ public class DeviceManagementController {
         loadDeviceData();
     }
 
-    private void openViewInDrawer(String fxmlPath, Device data) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/DeviceEditFormView.fxml"));
-            loader.setControllerFactory(springContext::getBean);
-            Node node = loader.load();
-
-            Object controller = loader.getController();
-            if (controller instanceof DeviceEditController) {
-                ((DeviceEditController) controller).setParentController(this);
-                ((DeviceEditController) controller).initData(data);
-                // 這裡假設 DeviceEditController 也有 setOnCloseRequest
-                ((DeviceEditController) controller).setOnCloseRequest(this::closeDrawer);
-            }
-
-            detailContainer.getChildren().setAll(node);
-            showDrawer();
-        } catch (IOException e) {
-            e.printStackTrace();
-            CustomAlertDialog.showError("", "无法加载界面: " + fxmlPath);
-        }
-    }
-
-    private void showDrawer() {
-        if (drawerPane == null) return;
-        drawerPane.setVisible(true);
-        drawerPane.setMouseTransparent(false);
-
-        TranslateTransition tt = new TranslateTransition(Duration.millis(500), drawerContent);
-        // 與 EmployeeList 一致，使用 550 作為寬度參考
-        tt.setFromX(550);
-        tt.setToX(0);
-        tt.play();
-    }
-
-    @FXML
-    public void closeDrawer() {
-        TranslateTransition tt = new TranslateTransition(Duration.millis(300), drawerContent);
-        tt.setToX(550);
-        tt.setOnFinished(e -> {
-            drawerPane.setVisible(false);
-            drawerPane.setMouseTransparent(true);
-            detailContainer.getChildren().clear();
-        });
-        tt.play();
-    }
-
-    @FXML
-    private void handleOverlayClick(MouseEvent event) {
-        if (event.getX() < (drawerPane.getWidth() - drawerContent.getWidth())) {
-            closeDrawer();
-        }
-    }
-
     private void createTableViewStructure() {
         deviceTable = new TableView<>();
         deviceTable.getStyleClass().add("custom-table-view");
         deviceTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         deviceTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        deviceTable.setEditable(true); // 开启编辑模式以支持 CheckBox 点击
 
-        rowNumberColumn = new TableColumn<>("序号");
-        rowNumberColumn.setMinWidth(50);
-        rowNumberColumn.setMaxWidth(50);
-        rowNumberColumn.setCellFactory(col -> new TableCell<Device, Integer>() {
-            @Override
-            protected void updateItem(Integer item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) setText(null);
-                else setText(String.valueOf(getIndex() + 1));
-            }
+        // 1. 创建全选复选框列
+        selectAllCheckBox = new CheckBox();
+        selectAllCheckBox.setOnAction(e -> {
+            boolean selected = selectAllCheckBox.isSelected();
+            deviceTable.getItems().forEach(d -> d.setSelected(selected));
         });
+
+        selectColumn = new TableColumn<>();
+        selectColumn.setGraphic(selectAllCheckBox);
+        selectColumn.setMinWidth(40);
+        selectColumn.setMaxWidth(40);
+        selectColumn.setSortable(false);
+        // 绑定模型中的 selectedProperty
+        selectColumn.setCellValueFactory(data -> data.getValue().selectedProperty());
+        selectColumn.setCellFactory(CheckBoxTableCell.forTableColumn(selectColumn));
 
         snCol = new TableColumn<>("序列号");
         snCol.setCellValueFactory(new PropertyValueFactory<>("deviceSn"));
@@ -184,8 +122,6 @@ public class DeviceManagementController {
 
         activeCol = new TableColumn<>("状态");
         activeCol.setCellValueFactory(new PropertyValueFactory<>("active"));
-        ipCol.setMinWidth(50);
-        ipCol.setMinWidth(50);
         activeCol.setCellFactory(column -> new TableCell<Device, Boolean>() {
             @Override
             protected void updateItem(Boolean item, boolean empty) {
@@ -193,6 +129,7 @@ public class DeviceManagementController {
                 if (empty || item == null) {
                     setText(null);
                     setGraphic(null);
+                    setStyle("");
                 } else {
                     setText(item ? "已激活" : "未激活");
                     setStyle(item ? "-fx-text-fill: #2ecc71;" : "-fx-text-fill: #ff3333;");
@@ -200,19 +137,17 @@ public class DeviceManagementController {
             }
         });
 
-        deviceTable.getColumns().addAll(rowNumberColumn, snCol, aliasCol, locCol, modelCol, ipCol, activeCol);
+        deviceTable.getColumns().addAll(selectColumn, snCol, aliasCol, locCol, modelCol, ipCol, activeCol);
     }
 
     private void setupActionColumn() {
         TableColumn<Device, Void> actionCol = new TableColumn<>("操作");
         actionCol.setCellFactory(col -> new TableCell<Device, Void>() {
             private final Button editButton = new Button("修改");
-
             {
                 editButton.getStyleClass().add("action-btn-detail");
                 editButton.setOnAction(event -> openViewInDrawer("/view/DeviceEditFormView.fxml", getTableView().getItems().get(getIndex())));
             }
-
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
@@ -228,35 +163,27 @@ public class DeviceManagementController {
     }
 
     public void loadDeviceData() {
-        // 1. 显示 Loading
         loadingManager.show("正在获取设备数据...");
-
         DeviceRequest request = new DeviceRequest();
         request.setDeviceSn(searchSn.getText() == null ? "" : searchSn.getText().trim());
         String filterValue = activeFilter.getValue();
-        if ("全部".equals(filterValue)) {
-            request.setActive(null);
-        } else {
-            request.setActive("已激活".equals(filterValue));
-        }
-        statusLabel.setText("正在加载设备数据...");
+        request.setActive("全部".equals(filterValue) ? null : "已激活".equals(filterValue));
 
-        // 使用 Task 进行异步处理，防止 UI 线程阻塞
-        javafx.concurrent.Task<java.util.List<Device>> loadTask = new javafx.concurrent.Task<java.util.List<Device>>() {
+        Task<List<Device>> loadTask = new Task<List<Device>>() {
             @Override
-            protected java.util.List<Device> call() throws Exception {
-                // 调用服务层获取数据
+            protected List<Device> call() throws Exception {
                 return deviceService.getDeviceList(request);
             }
         };
 
         loadTask.setOnSucceeded(e -> {
-            // 2. 成功后隐藏
             loadingManager.hide();
             List<Device> result = loadTask.getValue();
+            // 加载新数据时重置全选状态
+            selectAllCheckBox.setSelected(false);
             if (result != null) {
-                deviceTable.setItems(FXCollections.observableArrayList(loadTask.getValue()));
-                statusLabel.setText(String.format("加載完成，共 %d 台设备", loadTask.getValue().size()));
+                deviceTable.setItems(FXCollections.observableArrayList(result));
+                statusLabel.setText(String.format("加載完成，共 %d 台设备", result.size()));
             } else {
                 deviceTable.setItems(FXCollections.observableArrayList());
                 statusLabel.setText("未获取到数据内容");
@@ -265,9 +192,8 @@ public class DeviceManagementController {
 
         loadTask.setOnFailed(e -> {
             Throwable exception = loadTask.getException();
-            if (exception instanceof SocketTimeoutException || exception.getMessage().contains("timeout")) {
-                // 3. 超时显示重试按钮，重试逻辑就是再次调用本方法
-                loadingManager.showTimeout(() -> loadDeviceData());
+            if (exception instanceof SocketTimeoutException || (exception.getMessage() != null && exception.getMessage().contains("timeout"))) {
+                loadingManager.showTimeout(this::loadDeviceData);
             } else {
                 loadingManager.hide();
                 CustomAlertDialog.showError("错误", "加载失败");
@@ -278,41 +204,25 @@ public class DeviceManagementController {
     }
 
     @FXML
-    private void handleSearch() {
-        loadDeviceData();
-    }
-
-    @FXML
-    private void handleNewDevice() {
-        openViewInDrawer("/view/DeviceEditFormView.fxml", null);
-    }
-
-    private void handleEditDevice(Device device) {
-        openViewInDrawer("/view/DeviceEditFormView.fxml", device);
-    }
-
-    @FXML
     private void handleSynchronize() {
-        // 1. 获取选中的设备列表
-        ObservableList<Device> selectedItems = deviceTable.getSelectionModel().getSelectedItems();
+        // 修改为通过 filter 获取勾选的设备
+        List<Device> selectedItems = deviceTable.getItems().stream()
+                .filter(Device::isSelected)
+                .collect(Collectors.toList());
 
         if (selectedItems.isEmpty()) {
-            CustomAlertDialog.showWarning(null, "请选择至少一台设备进行同步。");
+            CustomAlertDialog.showWarning(null, "请勾选至少一台设备进行同步。");
             return;
         }
 
-        // 2. 提取所有选中设备的 SN
-        List<String> sns = new ArrayList<>();
-        for (Device device : selectedItems) {
-            sns.add(device.getDeviceSn());
-        }
+        List<String> sns = selectedItems.stream()
+                .map(Device::getDeviceSn)
+                .collect(Collectors.toList());
 
         statusLabel.setText("正在下发同步指令...");
+        loadingManager.show("正在提交同步请求...");
 
-        // 1. 显示 Loading
-        loadingManager.show("正在获取设备数据...");
-        // 3. 异步下发指令
-        javafx.concurrent.Task<Boolean> syncTask = new javafx.concurrent.Task<Boolean>() {
+        Task<Boolean> syncTask = new Task<Boolean>() {
             @Override
             protected Boolean call() throws Exception {
                 return deviceService.syncAttendanceData(sns);
@@ -320,11 +230,10 @@ public class DeviceManagementController {
         };
 
         syncTask.setOnSucceeded(e -> {
-            // 2. 成功后隐藏
             loadingManager.hide();
             if (syncTask.getValue()) {
-                statusLabel.setText("同步指令下发成功，设备正在处理...");
-                CustomAlertDialog.showInfo("指令下发成功", "考勤数据同步任务已启动，请稍后查看。");
+                statusLabel.setText("同步指令下发成功");
+                CustomAlertDialog.showInfo("指令下发成功", "考勤数据同步任务已启动。");
             } else {
                 statusLabel.setText("同步指令执行失败");
                 CustomAlertDialog.showError("执行失败", "服务器未能正确处理同步请求。");
@@ -332,17 +241,58 @@ public class DeviceManagementController {
         });
 
         syncTask.setOnFailed(e -> {
-            Throwable exception = syncTask.getException();
-            if (exception instanceof SocketTimeoutException || exception.getMessage().contains("timeout")) {
-                // 3. 超时显示重试按钮，重试逻辑就是再次调用本方法
-                loadingManager.showTimeout(() -> handleSynchronize());
-            } else {
-                statusLabel.setText("通信异常");
-                CustomAlertDialog.showError("网络错误", "无法连接到服务器下发指令。");
-            }
+            loadingManager.hide();
+            statusLabel.setText("通信异常");
+            CustomAlertDialog.showError("网络错误", "无法连接到服务器。");
         });
 
         new Thread(syncTask).start();
     }
 
+    // --- 抽屉逻辑 (保持不变) ---
+    private void openViewInDrawer(String fxmlPath, Device data) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/DeviceEditFormView.fxml"));
+            loader.setControllerFactory(springContext::getBean);
+            Node node = loader.load();
+            Object controller = loader.getController();
+            if (controller instanceof DeviceEditController) {
+                ((DeviceEditController) controller).setParentController(this);
+                ((DeviceEditController) controller).initData(data);
+                ((DeviceEditController) controller).setOnCloseRequest(this::closeDrawer);
+            }
+            detailContainer.getChildren().setAll(node);
+            showDrawer();
+        } catch (IOException e) {
+            e.printStackTrace();
+            CustomAlertDialog.showError("", "无法加载界面");
+        }
+    }
+
+    private void showDrawer() {
+        if (drawerPane == null) return;
+        drawerPane.setVisible(true);
+        drawerPane.setMouseTransparent(false);
+        TranslateTransition tt = new TranslateTransition(Duration.millis(500), drawerContent);
+        tt.setFromX(550); tt.setToX(0);
+        tt.play();
+    }
+
+    @FXML public void closeDrawer() {
+        TranslateTransition tt = new TranslateTransition(Duration.millis(300), drawerContent);
+        tt.setToX(550);
+        tt.setOnFinished(e -> {
+            drawerPane.setVisible(false);
+            drawerPane.setMouseTransparent(true);
+            detailContainer.getChildren().clear();
+        });
+        tt.play();
+    }
+
+    @FXML private void handleOverlayClick(MouseEvent event) {
+        if (event.getX() < (drawerPane.getWidth() - drawerContent.getWidth())) closeDrawer();
+    }
+
+    @FXML private void handleSearch() { loadDeviceData(); }
+    @FXML private void handleNewDevice() { openViewInDrawer("/view/DeviceEditFormView.fxml", null); }
 }

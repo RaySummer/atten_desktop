@@ -222,7 +222,7 @@ public class AdminListController {
         col.setCellFactory(c -> new TableCell<AdminUser, LocalDateTime>() {
             @Override protected void updateItem(LocalDateTime it, boolean em) {
                 super.updateItem(it, em);
-                setText((em || it == null) ? null : AppConstants.dateTimeFormatter(it, AppConstants.YYYY_MM_DD_HH_mm_SS));
+                setText((em || it == null) ? null : AppConstants.dateTimeFormatter(it, AppConstants.YYYY_MM_DD));
             }
         });
     }

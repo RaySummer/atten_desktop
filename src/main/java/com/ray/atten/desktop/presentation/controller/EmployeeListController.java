@@ -8,6 +8,8 @@ import com.ray.atten.desktop.utils.AppConstants;
 import com.ray.atten.desktop.utils.CustomAlertDialog;
 import com.ray.atten.desktop.utils.LoadingManager;
 import javafx.animation.TranslateTransition;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -18,6 +20,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
@@ -30,11 +33,11 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.net.SocketTimeoutException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class EmployeeListController {
@@ -46,12 +49,9 @@ public class EmployeeListController {
     @Autowired
     private LoadingManager loadingManager;
 
-    // --- 侧边抽屉相关控件 ---
     @FXML private AnchorPane drawerPane;
     @FXML private VBox drawerContent;
     @FXML private StackPane detailContainer;
-
-    // --- FXML 控件注入 ---
     @FXML private TextField queryField;
     @FXML private Label statusLabel;
     @FXML private Pagination pagination;
@@ -59,19 +59,18 @@ public class EmployeeListController {
     @FXML private ChoiceBox<String> statusChoiceBox;
     @FXML private ChoiceBox<String> fingerprintChoiceBox;
     @FXML private ChoiceBox<String> photoChoiceBox;
-    @FXML private Button batchSyncButton;
-    @FXML private Button printBadgeButton;
 
-    // --- TableView 相關控件 ---
+    // --- TableView 控件 ---
     private TableView<OaEmployee> employeeTable;
-    private TableColumn<OaEmployee, String> pinColumn, nameColumn, deptColumn, officeLocation;
+    private TableColumn<OaEmployee, Boolean> selectColumn; // 替换原 rowNumberColumn
+    private TableColumn<OaEmployee, String> pinColumn, nameColumn, companyColumn, deptColumn, officeLocation;
     private TableColumn<OaEmployee, String> fingerprintColumn, photoColumn;
     private TableColumn<OaEmployee, Boolean> inServiceColumn;
     private TableColumn<OaEmployee, LocalDateTime> entryDateColumn;
     private TableColumn<OaEmployee, Void> actionColumn;
-    private TableColumn<OaEmployee, Integer> rowNumberColumn;
 
-    // --- 分页与排序数据 ---
+    private CheckBox selectAllCheckBox;
+
     private final ObservableList<Integer> pageSizeOptions = FXCollections.observableArrayList(10, 20, 50, 100);
     private long totalRecords = 0;
     private String currentSortBy = "createTime";
@@ -90,16 +89,17 @@ public class EmployeeListController {
         setupDateTimeColumnFormatting(entryDateColumn);
         setupCenterAlignmentForTextColumn(pinColumn);
         setupCenterAlignmentForTextColumn(nameColumn);
+        setupCenterAlignmentForTextColumn(companyColumn);
         setupCenterAlignmentForTextColumn(deptColumn);
         setupCenterAlignmentForTextColumn(officeLocation);
 
+        // 允许表格本身多选（虽然我们用了 CheckBox 列）
         employeeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
         setupPaginationAndControls();
         setupColumnSorting();
-
-        // 初始化三个 ChoiceBox
         setupStatusChoiceBox();
-        setupSearchFilters(); // 处理指纹和照片
+        setupSearchFilters();
 
         updatePaginationMetadata();
         statusLabel.setText("数据列表已就绪。");
@@ -109,10 +109,24 @@ public class EmployeeListController {
         employeeTable = new TableView<>();
         employeeTable.getStyleClass().add("custom-table-view");
         employeeTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        employeeTable.setEditable(true); // 必须设置为可编辑，CheckBox 才能点击
 
-        rowNumberColumn = new TableColumn<>("序号");
+        // 1. 创建带全选功能的列头
+        selectAllCheckBox = new CheckBox();
+        selectAllCheckBox.setOnAction(e -> handleSelectAllAction());
+
+        selectColumn = new TableColumn<>();
+        selectColumn.setGraphic(selectAllCheckBox);
+        selectColumn.setSortable(false);
+        selectColumn.setMinWidth(40); selectColumn.setMaxWidth(40);
+
+        // 绑定 CheckBox 渲染
+        selectColumn.setCellValueFactory(data -> data.getValue().selectedProperty());
+        selectColumn.setCellFactory(CheckBoxTableCell.forTableColumn(selectColumn));
+
         pinColumn = new TableColumn<>("工号");
         nameColumn = new TableColumn<>("姓名");
+        companyColumn = new TableColumn<>("公司");
         deptColumn = new TableColumn<>("部门");
         officeLocation = new TableColumn<>("办公地点");
         fingerprintColumn = new TableColumn<>("指纹");
@@ -122,15 +136,16 @@ public class EmployeeListController {
         actionColumn = new TableColumn<>("操作");
 
         // 设置列宽
-        rowNumberColumn.setMinWidth(50); rowNumberColumn.setMaxWidth(50);
         fingerprintColumn.setMinWidth(65); fingerprintColumn.setMaxWidth(80);
         photoColumn.setMinWidth(65); photoColumn.setMaxWidth(80);
-        entryDateColumn.setMinWidth(120);
-        actionColumn.setMinWidth(180);
+        entryDateColumn.setMinWidth(100);
+        companyColumn.setMinWidth(120);
+        actionColumn.setMinWidth(140);
 
         // 绑定字段
         pinColumn.setCellValueFactory(new PropertyValueFactory<>("pin"));
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        companyColumn.setCellValueFactory(new PropertyValueFactory<>("company"));
         deptColumn.setCellValueFactory(new PropertyValueFactory<>("dept"));
         officeLocation.setCellValueFactory(new PropertyValueFactory<>("officeLocation"));
         fingerprintColumn.setCellValueFactory(new PropertyValueFactory<>("fingerprint"));
@@ -138,25 +153,81 @@ public class EmployeeListController {
         inServiceColumn.setCellValueFactory(new PropertyValueFactory<>("inService"));
         entryDateColumn.setCellValueFactory(new PropertyValueFactory<>("entryDate"));
 
-        // 格式化“是/否”列
         setupBinaryStatusColumnFormatting(fingerprintColumn);
         setupBinaryStatusColumnFormatting(photoColumn);
 
-        rowNumberColumn.setCellFactory(col -> new TableCell<OaEmployee, Integer>() {
-            @Override
-            protected void updateItem(Integer item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) setText(null);
-                else setText(String.valueOf((pagination.getCurrentPageIndex() * currentPageSize) + getIndex() + 1));
-            }
-        });
-
-        employeeTable.getColumns().addAll(rowNumberColumn, pinColumn, nameColumn, deptColumn,
+        employeeTable.getColumns().addAll(selectColumn, pinColumn, nameColumn, companyColumn, deptColumn,
                 fingerprintColumn, photoColumn, officeLocation, inServiceColumn, entryDateColumn, actionColumn);
     }
 
+    private void handleSelectAllAction() {
+        boolean isSelected = selectAllCheckBox.isSelected();
+        employeeTable.getItems().forEach(emp -> emp.setSelected(isSelected));
+    }
+
+    private void loadEmployeeData(int pageIndex) {
+        loadingManager.show("正在加载中.....");
+        OaEmployeeQueryRequest request = new OaEmployeeQueryRequest();
+        fillRequestParams(request);
+        request.setPageNum(pageIndex + 1);
+
+        Task<PageResponse<OaEmployee>> loadTask = new Task<PageResponse<OaEmployee>>() {
+            @Override
+            protected PageResponse<OaEmployee> call() throws Exception {
+                return oaEmployeeService.queryEmployees(request);
+            }
+        };
+
+        loadTask.setOnSucceeded(e -> {
+            loadingManager.hide();
+            PageResponse<OaEmployee> res = loadTask.getValue();
+            if (res != null) {
+                // 加载新数据时，重置全选框状态
+                selectAllCheckBox.setSelected(false);
+                employeeTable.setItems(FXCollections.observableArrayList(res.getContent()));
+                statusLabel.setText(String.format("页面 %d/%d 加载完成。总记录: %d",
+                        pageIndex + 1, pagination.getPageCount(), res.getTotalElements()));
+            }
+        });
+
+        loadTask.setOnFailed(e -> {
+            loadingManager.hide();
+            CustomAlertDialog.showError("错误", "加载员工数据失败");
+        });
+
+        new Thread(loadTask).start();
+    }
+
+    // --- 修改后的批量操作处理 ---
+    @FXML
+    private void handleBatchSynchronize() {
+        List<OaEmployee> selected = employeeTable.getItems().stream()
+                .filter(OaEmployee::isSelected)
+                .collect(Collectors.toList());
+
+        if (selected.isEmpty()) {
+            CustomAlertDialog.showWarning(null, "请勾选至少一位员工。");
+            return;
+        }
+        openViewInDrawer("/view/SyncGroupView.fxml", new ArrayList<>(selected));
+    }
+
+    @FXML
+    private void handlePrintBadge() {
+        List<OaEmployee> selected = employeeTable.getItems().stream()
+                .filter(OaEmployee::isSelected)
+                .collect(Collectors.toList());
+
+        if (selected.isEmpty()) {
+            CustomAlertDialog.showWarning(null, "请勾选至少一位员工。");
+            return;
+        }
+        openViewInDrawer("/view/BadgePrintView.fxml", new ArrayList<>(selected));
+    }
+
+    // --- 其余辅助方法保持逻辑一致 ---
+
     private void setupSearchFilters() {
-        // 指纹筛选
         fingerprintChoiceBox.getItems().addAll("全部", "已有", "未录");
         fingerprintChoiceBox.setValue("全部");
         fingerprintChoiceBox.getSelectionModel().selectedItemProperty().addListener((o, ol, nv) -> {
@@ -174,15 +245,14 @@ public class EmployeeListController {
 
     private void fillRequestParams(OaEmployeeQueryRequest request) {
         request.setKeyword(queryField.getText().trim());
-        // 直接传递 Boolean 对象，后端 QueryRequest 里的字段也必须是 Boolean 类型而非 boolean
         request.setInService(currentInServiceStatus);
         request.setHasFingerprint(hasFingerprint);
         request.setHasPhoto(hasPhoto);
-
         request.setPageSize(currentPageSize);
         request.setSortBy(currentSortBy);
         request.setSortOrder(currentSortOrder);
     }
+
     private void updatePaginationMetadata() {
         loadingManager.show("正在加载中.....");
         OaEmployeeQueryRequest request = new OaEmployeeQueryRequest();
@@ -213,37 +283,6 @@ public class EmployeeListController {
         new Thread(metadataTask).start();
     }
 
-    private void loadEmployeeData(int pageIndex) {
-        loadingManager.show("正在加载中.....");
-        OaEmployeeQueryRequest request = new OaEmployeeQueryRequest();
-        fillRequestParams(request);
-        request.setPageNum(pageIndex + 1);
-
-        Task<PageResponse<OaEmployee>> loadTask = new Task<PageResponse<OaEmployee>>() {
-            @Override
-            protected PageResponse<OaEmployee> call() throws Exception {
-                return oaEmployeeService.queryEmployees(request);
-            }
-        };
-
-        loadTask.setOnSucceeded(e -> {
-            loadingManager.hide();
-            PageResponse<OaEmployee> res = loadTask.getValue();
-            if (res != null) {
-                employeeTable.setItems(FXCollections.observableArrayList(res.getContent()));
-                statusLabel.setText(String.format("页面 %d/%d 加载完成。总记录: %d",
-                        pageIndex + 1, pagination.getPageCount(), res.getTotalElements()));
-            }
-        });
-
-        loadTask.setOnFailed(e -> {
-            loadingManager.hide();
-            CustomAlertDialog.showError("错误", "加载员工数据失败");
-        });
-
-        new Thread(loadTask).start();
-    }
-
     private void setupBinaryStatusColumnFormatting(TableColumn<OaEmployee, String> col) {
         col.setCellFactory(column -> new TableCell<OaEmployee, String>() {
             @Override
@@ -261,8 +300,6 @@ public class EmployeeListController {
             }
         });
     }
-
-    // --- 其余 UI 辅助逻辑 (状态、日期、居中、分页、排序、抽屉等) ---
 
     private void setupStatusChoiceBox() {
         statusChoiceBox.getItems().addAll("全部", "在职", "离职");
@@ -311,7 +348,7 @@ public class EmployeeListController {
         col.setCellFactory(c -> new TableCell<OaEmployee, LocalDateTime>() {
             @Override protected void updateItem(LocalDateTime it, boolean em) {
                 super.updateItem(it, em);
-                setText((em || it == null) ? null : AppConstants.dateTimeFormatter(it, AppConstants.YYYY_MM_DD_HH_mm_SS));
+                setText((em || it == null) ? null : AppConstants.dateTimeFormatter(it, AppConstants.YYYY_MM_DD));
             }
         });
     }
@@ -421,16 +458,4 @@ public class EmployeeListController {
     }
 
     @FXML private void handleSearch() { updatePaginationMetadata(); }
-
-    @FXML private void handleBatchSynchronize() {
-        ObservableList<OaEmployee> selected = employeeTable.getSelectionModel().getSelectedItems();
-        if (selected.isEmpty()) { CustomAlertDialog.showWarning(null, "请选择至少一位员工。"); return; }
-        openViewInDrawer("/view/SyncGroupView.fxml", new ArrayList<>(selected));
-    }
-
-    @FXML private void handlePrintBadge() {
-        ObservableList<OaEmployee> selected = employeeTable.getSelectionModel().getSelectedItems();
-        if (selected.isEmpty()) { CustomAlertDialog.showWarning(null, "请选择至少一位员工。"); return; }
-        openViewInDrawer("/view/BadgePrintView.fxml", new ArrayList<>(selected));
-    }
 }

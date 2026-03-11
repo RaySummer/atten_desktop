@@ -10,13 +10,16 @@ import com.ray.atten.desktop.utils.CustomAlertDialog;
 import com.ray.atten.desktop.utils.LoadingManager;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.controlsfx.control.CheckComboBox;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -41,7 +44,7 @@ public class SyncGroupController {
     private TableColumn<OaEmployee, Void> actionColumn;
 
     @FXML
-    private ComboBox<AttendanceGroup> groupComboBox;
+    private StackPane groupSelectorContainer;
     @FXML
     private Button confirmButton;
     @FXML
@@ -58,6 +61,9 @@ public class SyncGroupController {
     @Autowired
     private LoadingManager loadingManager;
 
+    private CheckComboBox<AttendanceGroup> groupCheckComboBox;
+    private ObservableList<AttendanceGroup> allGroups = FXCollections.observableArrayList();
+
     // 【关键】用于关闭抽屉的回调逻辑
     private Runnable onCloseRequest;
 
@@ -69,24 +75,63 @@ public class SyncGroupController {
     public void initialize() {
         confirmButton.setDisable(true);
         setupDateTimeColumnFormatting(entryDateColumn);
-        // 监听考勤组选择逻辑
-        groupComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> {
-            boolean disable = (newV == null || newV.getDeviceSns() == null || newV.getDeviceSns().isEmpty());
-            confirmButton.setDisable(disable);
-        });
 
-        // 考勤组 ComboBox 显示格式
-        groupComboBox.setCellFactory(lv -> new ListCell<AttendanceGroup>() {
-            @Override
-            protected void updateItem(AttendanceGroup item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty ? null : item.getGroupName());
-            }
-        });
-        groupComboBox.setButtonCell(groupComboBox.getCellFactory().call(null));
+        // 3. 初始化多选下拉框
+        initGroupCheckComboBox();
 
         setupTableColumns();
         setupActionColumn();
+    }
+
+    private void initGroupCheckComboBox() {
+        groupCheckComboBox = new CheckComboBox<>(allGroups);
+        groupCheckComboBox.setPrefWidth(250.0);
+        // 初始标题
+        groupCheckComboBox.setTitle("请选择目标设备组");
+
+        groupCheckComboBox.setConverter(new javafx.util.StringConverter<AttendanceGroup>() {
+            @Override
+            public String toString(AttendanceGroup group) {
+                return group == null ? "" : group.getGroupName();
+            }
+            @Override
+            public AttendanceGroup fromString(String string) { return null; }
+        });
+
+        // 【新增】监听选中项变化，实时更新下拉框显示的文字
+        groupCheckComboBox.getCheckModel().getCheckedItems().addListener((ListChangeListener<AttendanceGroup>) c -> {
+            ObservableList<AttendanceGroup> selectedItems = groupCheckComboBox.getCheckModel().getCheckedItems();
+
+            if (selectedItems.isEmpty()) {
+                groupCheckComboBox.setTitle("请选择目标设备组");
+            } else {
+                // 将所有选中的组名拼接起来，例如："办公室组, 车间组"
+                String combinedNames = selectedItems.stream()
+                        .map(AttendanceGroup::getGroupName)
+                        .collect(Collectors.joining(", "));
+
+                // 如果选得太多，显示 "已选 X 个组" 也可以，防止文字太长撑破布局
+                if (selectedItems.size() > 2) {
+                    groupCheckComboBox.setTitle("已选择 " + selectedItems.size() + " 个设备组");
+                } else {
+                    groupCheckComboBox.setTitle(combinedNames);
+                }
+            }
+
+            // 别忘了更新同步按钮的状态
+            updateConfirmButtonState();
+        });
+
+        groupSelectorContainer.getChildren().clear();
+        groupSelectorContainer.getChildren().add(groupCheckComboBox);
+    }
+
+    private void updateConfirmButtonState() {
+        ObservableList<AttendanceGroup> selectedGroups = groupCheckComboBox.getCheckModel().getCheckedItems();
+        // 只有选了组，且待同步列表不为空，才启用按钮
+        boolean hasSelectedGroups = !selectedGroups.isEmpty();
+        boolean hasEmployees = employeesToSync != null && !employeesToSync.isEmpty();
+        confirmButton.setDisable(!hasSelectedGroups || !hasEmployees);
     }
 
     private void setupTableColumns() {
@@ -156,6 +201,7 @@ public class SyncGroupController {
         boolean isOk = CustomAlertDialog.showConfirmation("", "确定要从列表中移除员工 " + employee.getName() + " 吗？");
         if (isOk) {
             employeesToSync.remove(employee);
+            updateConfirmButtonState();
         }
     }
 
@@ -176,7 +222,7 @@ public class SyncGroupController {
             }
         };
         task.setOnSucceeded(e -> {
-            groupComboBox.getItems().setAll(task.getValue());
+            allGroups.setAll(task.getValue());
         });
         task.setOnFailed(e -> {
             CustomAlertDialog.showError("", "加载考勤组失败: " + task.getException().getMessage());
@@ -186,15 +232,23 @@ public class SyncGroupController {
 
     @FXML
     private void handleConfirmSync() {
-        AttendanceGroup selectedGroup = groupComboBox.getValue();
-        if (selectedGroup == null) return;
+        // 4. 获取所有选中的考勤组
+        ObservableList<AttendanceGroup> selectedGroups = groupCheckComboBox.getCheckModel().getCheckedItems();
+        if (selectedGroups.isEmpty()) return;
 
-        final String deviceSns = selectedGroup.getDeviceSnsString();
-        if (deviceSns.isEmpty()) {
+        // 5. 提取并合并所有选中组的设备 SN (去重并用逗号分隔)
+        String combinedSns = selectedGroups.stream()
+                .map(AttendanceGroup::getDeviceSnsString)
+                .filter(sns -> sns != null && !sns.isEmpty())
+                .distinct()
+                .collect(Collectors.joining(","));
+
+        if (combinedSns.isEmpty()) {
             CustomAlertDialog.showWarning("", "所选考勤组未绑定设备。");
             return;
         }
 
+        // 构建同步请求
         List<SyncRequest> syncRequests = employeesToSync.stream()
                 .map(employee -> {
                     SyncRequest request = new SyncRequest();
@@ -204,7 +258,7 @@ public class SyncGroupController {
                     request.setFingerSize(employee.getFingerSize());
                     request.setPhotoBase64(employee.getPhotoBase64());
                     request.setPhotoSize(employee.getPhotoSize());
-                    request.setDeviceSn(deviceSns);
+                    request.setDeviceSn(combinedSns); // 使用合并后的长 SN 字符串
                     return request;
                 })
                 .collect(Collectors.toList());
