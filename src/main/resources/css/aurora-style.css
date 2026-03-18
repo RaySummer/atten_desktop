@@ -1,0 +1,214 @@
+/* 主卡片：紧凑且具质感 */
+.aurora-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.1), 30, 0, 0, 10);
+    -fx-border-color: #f1f2f6;
+    -fx-border-radius: 20;
+}
+
+/* 标题：大且有力 */
+.aurora-header-label {
+    -fx-text-fill: #2f3542;
+    -fx-font-size: 28px;
+    -fx-font-weight: 800; /* 超粗体体现权威感 */
+    -fx-font-family: "System";
+}
+
+/* 输入框包装：线性简约感 */
+.aurora-input-wrapper {
+    -fx-border-color: transparent transparent #e1e4e8 transparent; /* 仅显示底边 */
+    -fx-border-width: 1.5;
+    -fx-transition: 0.3s;
+}
+
+.aurora-input-wrapper:focused-within {
+    -fx-border-color: transparent transparent #3498db transparent;
+}
+
+.aurora-text-field {
+    -fx-background-color: transparent;
+    -fx-padding: 10 5 10 5;
+    -fx-text-fill: #2f3542;
+    -fx-font-size: 14px;
+}
+
+/* 按钮：协调且精致 */
+.aurora-primary-button {
+    -fx-background-color: linear-gradient(to right, #3498db, #2980b9);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8; /* 稍硬的圆角，更有科技感 */
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(52, 152, 219, 0.3), 10, 0, 0, 4);
+}
+
+.aurora-primary-button:hover {
+    -fx-background-color: #3498db;
+    -fx-translate-y: -1; /* 悬停微抬感 */
+}
+
+/* 其他小元素 */
+.aurora-checkbox { -fx-text-fill: #747d8c; -fx-font-size: 12px; }
+.aurora-muted-link { -fx-text-fill: #3498db; -fx-font-size: 12px; -fx-underline: false; }
+.aurora-status-text { -fx-text-fill: #a4b0be; -fx-font-size: 11px; }
+
+/* 标题栏文字 */
+.aurora-window-subtitle {
+    -fx-text-fill: #95a5a6;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.aurora-header-mini {
+    -fx-text-fill: #2f3542;
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
+}
+
+/* 标签样式 */
+.aurora-field-label {
+    -fx-text-fill: #747d8c;
+    -fx-font-size: 14px;
+}
+
+/* 带边框的输入框（适合配置页） */
+.aurora-text-field-border {
+    -fx-background-color: white;
+    -fx-border-color: #e1e4e8;
+    -fx-border-radius: 5;
+    -fx-padding: 8;
+}
+
+.aurora-text-field-border:focused {
+    -fx-border-color: #3498db;
+    -fx-effect: dropshadow(three-pass-box, rgba(52, 152, 219, 0.2), 5, 0, 0, 0);
+}
+
+/* 下拉框美化 */
+.aurora-combo-box {
+    -fx-background-color: white;
+    -fx-border-color: #e1e4e8;
+    -fx-border-radius: 5;
+}
+
+/* =========================================
+   极光白 (Aurora White) 现代 UI 风格
+   ========================================= */
+
+/* 1. 主卡片容器：通透感 & 柔和投影 */
+.aurora-card {
+    -fx-background-color: white; /* 纯白底色 */
+    -fx-background-radius: 15;
+    -fx-border-radius: 15;
+    -fx-border-color: #ecf0f1; /* 极细的浅灰色边框 */
+    -fx-border-width: 0.5;
+    /* 核心：大范围、低透明度的柔和投影，营造悬浮感 */
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.08), 25, 0, 0, 10);
+}
+
+/* 顶部雅致关闭按钮 */
+.aurora-exit-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 50;
+    -fx-cursor: hand;
+    -fx-padding: 6;
+}
+
+.aurora-exit-button:hover {
+    -fx-background-color: #f6f8f9; /* 极浅的悬停色 */
+}
+
+.aurora-exit-button:hover SVGPath {
+    -fx-fill: #e74c3c; /* 悬停时图标变红 */
+}
+
+/* 2. 文本样式 */
+.aurora-header-label {
+    -fx-text-fill: #2c3e50;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+
+.aurora-subtitle-label {
+    -fx-text-fill: #95a5a6;
+    -fx-font-size: 13px;
+}
+
+/* 3. 输入区域重塑：无边框感 & 聚焦光晕 */
+.aurora-input-group {
+    -fx-background-color: #fbfcfc; /* 极浅的底色 */
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: #f1f3f4;
+    -fx-border-width: 1;
+}
+
+/* 聚焦时的蓝色光晕效果 */
+.aurora-input-group:focused-within {
+    -fx-border-color: #3498db;
+    -fx-border-width: 1.5;
+    -fx-effect: dropshadow(three-pass-box, rgba(52, 152, 219, 0.15), 10, 0, 0, 0);
+}
+
+.aurora-text-field {
+    -fx-background-color: transparent; /* 输入框背景透明 */
+    -fx-text-fill: #34495e;
+    -fx-font-size: 14px;
+    -fx-padding: 12 15 12 10;
+    -fx-prompt-text-fill: #bdc3c7;
+}
+
+/* 4. 控件样式 */
+.aurora-checkbox {
+    -fx-text-fill: #7f8c8d;
+    -fx-font-size: 12px;
+}
+
+.aurora-checkbox .box {
+    -fx-background-color: #fbfcfc;
+    -fx-border-color: #f1f3f4;
+    -fx-border-radius: 4;
+}
+
+.aurora-checkbox:selected .mark {
+    -fx-background-color: #3498db;
+}
+
+/* 5. 优雅的微渐变按钮 */
+.aurora-primary-button {
+    /* 使用深蓝色到浅蓝色的微小渐变，更有层次 */
+    -fx-background-color: linear-gradient(to right, #2980b9, #3498db);
+    -fx-text-fill: white;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 25; /* 饱满的圆角 */
+    -fx-cursor: hand;
+}
+
+.aurora-primary-button:hover {
+    -fx-background-color: linear-gradient(to right, #3498db, #5dade2);
+    /* 悬停时的光晕效果 */
+    -fx-effect: dropshadow(three-pass-box, rgba(52, 152, 219, 0.3), 15, 0, 0, 0);
+}
+
+.aurora-primary-button:pressed {
+    -fx-background-color: #2980b9;
+}
+
+/* 链接样式 */
+.aurora-muted-link {
+    -fx-text-fill: #bdc3c7;
+    -fx-font-size: 12px;
+    -fx-underline: false;
+}
+
+.aurora-muted-link:hover {
+    -fx-text-fill: #3498db;
+}
+
+.aurora-status-text {
+    -fx-text-fill: #95a5a6;
+    -fx-font-size: 12px;
+}

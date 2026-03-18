@@ -3,32 +3,65 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.shape.SVGPath?>
 
-<VBox alignment="CENTER" spacing="15.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.ray.atten.desktop.presentation.controller.ServerSetupController"
-      prefWidth="400.0" prefHeight="300.0" styleClass="setup-container"> <padding>
-    <Insets bottom="20.0" left="40.0" right="40.0" top="20.0" />
-</padding>
+<StackPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.ray.atten.desktop.presentation.controller.ServerSetupController"
+           prefWidth="400.0" prefHeight="400.0" style="-fx-background-color: transparent;">
 
-    <Label text="服务器连接配置" styleClass="header-label" />
+    <VBox fx:id="rootVBox" alignment="TOP_CENTER" spacing="0"
+          styleClass="aurora-card"
+          onMousePressed="#handleMousePressed"
+          onMouseDragged="#handleMouseDragged">
 
-    <HBox spacing="10.0" alignment="CENTER_LEFT">
-        <Label text="协议:" prefWidth="50.0" styleClass="normal-label" />
-        <ComboBox fx:id="protocolCombo" prefWidth="100.0" styleClass="custom-combo-box" />
-    </HBox>
+        <HBox alignment="CENTER_RIGHT" prefHeight="45.0">
+            <padding>
+                <Insets right="10.0" left="20.0"/>
+            </padding>
+            <Label text="服务器配置" styleClass="aurora-window-subtitle" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            <Button onAction="#handleExit" styleClass="modern-exit-button">
+                <graphic>
+                    <SVGPath content="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"
+                             fill="#95a5a6" scaleX="0.6" scaleY="0.6"/>
+                </graphic>
+            </Button>
+        </HBox>
 
-    <HBox spacing="10.0" alignment="CENTER_LEFT">
-        <Label text="地址:" prefWidth="50.0" styleClass="normal-label" />
-        <TextField fx:id="hostField" HBox.hgrow="ALWAYS" promptText="例如: 192.168.1.100" styleClass="custom-text-field" />
-    </HBox>
+        <VBox spacing="25.0" alignment="CENTER">
+            <padding>
+                <Insets bottom="30.0" left="50.0" right="50.0" top="10.0"/>
+            </padding>
 
-    <HBox spacing="10.0" alignment="CENTER_LEFT">
-        <Label text="端口:" prefWidth="50.0" styleClass="normal-label" />
-        <TextField fx:id="portField" prefWidth="100.0" promptText="8821" styleClass="custom-text-field" />
-    </HBox>
+            <VBox alignment="CENTER" spacing="5.0">
+                <Label text="连接设置" styleClass="aurora-header-mini"/>
+                <Separator prefWidth="30.0" maxWidth="30.0" style="-fx-background-color: #3498db;"/>
+            </VBox>
 
-    <Button fx:id="connectBtn" text="连接并保存" onAction="#onConnect" prefWidth="200.0" styleClass="accent-button" />
+            <GridPane vgap="18.0" hgap="12.0" alignment="CENTER">
+                <columnConstraints>
+                    <ColumnConstraints halignment="RIGHT" minWidth="40.0"/>
+                    <ColumnConstraints hgrow="ALWAYS" minWidth="150.0"/>
+                </columnConstraints>
 
-    <Label fx:id="statusLabel" text="请输入服务器信息" wrapText="true" alignment="CENTER" styleClass="muted-label" />
+                <Label text="协议" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="aurora-field-label"/>
+                <ComboBox fx:id="protocolCombo" prefWidth="200.0" styleClass="aurora-combo-box"
+                          GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
-</VBox>
+                <Label text="地址" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="aurora-field-label"/>
+                <TextField fx:id="hostField" promptText="192.168.x.x" styleClass="aurora-text-field-border"
+                           GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                <Label text="端口" GridPane.rowIndex="2" GridPane.columnIndex="0" styleClass="aurora-field-label"/>
+                <TextField fx:id="portField" promptText="8821" styleClass="aurora-text-field-border"
+                           GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+            </GridPane>
+
+            <VBox spacing="15.0" alignment="CENTER">
+                <Button fx:id="connectBtn" text="连接并保存" onAction="#onConnect"
+                        prefWidth="200.0" prefHeight="20.0" styleClass="aurora-primary-button"/>
+
+                <Label fx:id="statusLabel" text="请输入服务器信息" styleClass="aurora-status-text"/>
+            </VBox>
+        </VBox>
+    </VBox>
+</StackPane>

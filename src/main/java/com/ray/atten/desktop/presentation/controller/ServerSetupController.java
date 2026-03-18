@@ -9,11 +9,13 @@ import javafx.concurrent.WorkerStateEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -38,6 +40,9 @@ public class ServerSetupController {
     private TextField portField;
     @FXML
     private Label statusLabel;
+
+    private double xOffset = 0;
+    private double yOffset = 0;
 
     @FXML
     public void initialize() {
@@ -64,6 +69,36 @@ public class ServerSetupController {
         } else {
             portField.setText("80");
         }
+    }
+
+    /**
+     * 鼠标按下：记录初始位置
+     */
+    @FXML
+    private void handleMousePressed(MouseEvent event) {
+        xOffset = event.getSceneX();
+        yOffset = event.getSceneY();
+    }
+
+    /**
+     * 鼠标拖拽：移动窗口
+     */
+    @FXML
+    private void handleMouseDragged(MouseEvent event) {
+        // 通过事件源获取当前的 Stage
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        stage.setX(event.getScreenX() - xOffset);
+        stage.setY(event.getScreenY() - yOffset);
+    }
+
+    /**
+     * 退出系统
+     */
+    @FXML
+    private void handleExit() {
+        Platform.runLater(() -> {
+            System.exit(0);
+        });
     }
 
     @FXML
@@ -158,5 +193,6 @@ public class ServerSetupController {
             statusLabel.setText("加载主界面失败: " + e.getMessage());
         }
     }
+
 
 }

@@ -75,6 +75,7 @@ public class EmployeeDetailController {
     private volatile boolean isConnecting = false;
     private FingerprintResult capturedResult;
 
+    private ScheduledExecutorService heartbeatExecutor;
 
     @Autowired
     private ApplicationContext springContext;
@@ -233,6 +234,7 @@ public class EmployeeDetailController {
         if (onCloseRequest != null) {
             onCloseRequest.run();
         }
+        cleanup();
     }
 
     // --- 拍照、上传、指纹及其他逻辑 (保持不变) ---
@@ -423,21 +425,32 @@ public class EmployeeDetailController {
     private void tryConnectDevice(boolean isReconnect) {
         this.isConnecting = true;
         setUiConnectingState(isReconnect);
-        executor.submit(() -> {
-            boolean success = false;
-            try {
-                Future<Boolean> future = executor.submit(FingerprintUtil::initAndConnect);
-                success = future.get(5, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                FingerprintUtil.destroy();
-            } finally {
-                final boolean finalSuccess = success;
-                Platform.runLater(() -> {
-                    this.isConnecting = false;
-                    updateConnectionStatus(finalSuccess);
-                });
+
+        // 直接提交一个任务即可，不要嵌套 submit
+        Task<Boolean> connectTask = new Task<Boolean>() {
+            @Override
+            protected Boolean call() throws Exception {
+                // 这里直接调用，不要再往 executor 里扔了
+                // 如果 initAndConnect 内部有阻塞，这里会等待
+                return FingerprintUtil.initAndConnect();
             }
+        };
+
+        connectTask.setOnSucceeded(e -> {
+            this.isConnecting = false;
+            boolean success = connectTask.getValue();
+            updateConnectionStatus(success);
         });
+
+        connectTask.setOnFailed(e -> {
+            this.isConnecting = false;
+            Throwable ex = connectTask.getException();
+            FingerprintUtil.destroy(); // 发生异常时清理
+            updateConnectionStatus(false);
+        });
+
+        // 建议给这个任务单独开一个线程，或者确认 executor 线程数 > 1
+        new Thread(connectTask).start();
     }
 
     private void setUiConnectingState(boolean isReconnect) {
@@ -450,23 +463,61 @@ public class EmployeeDetailController {
     }
 
     private void updateConnectionStatus(boolean connected) {
-        if (connected) {
-            lblMessage.setText("指纹设备已连接。");
-            lblMessage.setStyle("-fx-text-fill: green;");
-            reconnectButton.setVisible(false);
-            enrollButton.setDisable(false);
-        } else {
-            lblMessage.setText("连接设备失败。请检查并重新连接。");
-            lblMessage.setStyle("-fx-text-fill: red;");
-            reconnectButton.setVisible(true);
-            reconnectButton.setDisable(false);
-            enrollButton.setDisable(true);
+        Platform.runLater(() -> {
+            if (connected) {
+                lblMessage.setText("指纹设备已连接。");
+                lblMessage.setStyle("-fx-text-fill: green;");
+                reconnectButton.setVisible(false);
+                enrollButton.setDisable(false);
+                // 【新增】开始心跳监测
+                startHeartbeat();
+            } else {
+                lblMessage.setText("连接设备失败。请检查并重新连接。");
+                lblMessage.setStyle("-fx-text-fill: red;");
+                reconnectButton.setVisible(true);
+                reconnectButton.setDisable(false);
+                enrollButton.setDisable(true);
+                // 【新增】停止监测
+                stopHeartbeat();
+            }
+        });
+    }
+
+    private void startHeartbeat() {
+        if (heartbeatExecutor != null && !heartbeatExecutor.isShutdown()) return;
+
+        heartbeatExecutor = Executors.newSingleThreadScheduledExecutor();
+        heartbeatExecutor.scheduleAtFixedRate(() -> {
+            // 调用 Util 层检测设备是否还在
+            // 注意：这个方法必须非常轻量，不能阻塞
+            boolean stillConnected = FingerprintUtil.initAndConnect();
+
+            if (!stillConnected) {
+                Platform.runLater(() -> {
+                    updateConnectionStatus(false);
+                    lblMessage.setText("设备已断开连接！");
+                    stopHeartbeat(); // 断开了就没必要再检测了，直到下次手动重连成功
+                });
+            }
+        }, 30, 30, TimeUnit.SECONDS); // 每30秒检测一次
+    }
+
+    private void stopHeartbeat() {
+        if (heartbeatExecutor != null) {
+            heartbeatExecutor.shutdownNow();
+            heartbeatExecutor = null;
         }
+    }
+
+    private void cleanup() {
+        stopHeartbeat();
+        FingerprintUtil.destroy();
     }
 
     @FXML
     private void handleCancel() {
         if (onCloseRequest != null) onCloseRequest.run();
+        cleanup();
     }
 
     @FXML

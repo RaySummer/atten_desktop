@@ -1,36 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.geometry.Insets?>
+<?import javafx.scene.shape.SVGPath?>
+<StackPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.ray.atten.desktop.presentation.controller.LoginController"
+           prefWidth="400.0" prefHeight="350.0" style="-fx-background-color: transparent;">
 
-<VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.ray.atten.desktop.presentation.controller.LoginController"
-      prefWidth="400.0" prefHeight="350.0" styleClass="setup-container">
+    <VBox fx:id="rootVBox" alignment="TOP_CENTER" spacing="0"
+          styleClass="aurora-card"
+          onKeyPressed="#handleKeyPressed"
+          onMousePressed="#handleMousePressed"
+          onMouseDragged="#handleMouseDragged">
 
-    <padding>
-        <Insets bottom="30.0" left="50.0" right="50.0" top="30.0" />
-    </padding>
+        <HBox alignment="CENTER_RIGHT" prefHeight="40.0">
+            <padding>
+                <Insets right="10.0" top="5.0"/>
+            </padding>
+            <Button onAction="#handleExit" styleClass="aurora-exit-button">
+                <graphic>
+                    <SVGPath content="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"
+                             fill="#95a5a6" scaleX="0.6" scaleY="0.6"/>
+                </graphic>
+            </Button>
+        </HBox>
 
-    <Label text="系统登录" styleClass="header-label" />
+        <VBox spacing="28.0" alignment="CENTER">
+            <padding>
+                <Insets bottom="30.0" left="65.0" right="65.0" top="5.0"/>
+            </padding>
 
-    <HBox spacing="10.0" alignment="CENTER_LEFT">
-        <Label text="账号:" prefWidth="50.0" styleClass="normal-label" />
-        <TextField fx:id="txtUsername" HBox.hgrow="ALWAYS" promptText="请输入用户名" styleClass="custom-text-field" />
-    </HBox>
+            <VBox alignment="CENTER" spacing="8.0">
+                <Label text="系统登录" styleClass="aurora-header-label"/>
+                <Separator prefWidth="40.0" maxWidth="40.0" style="-fx-background-color: #3498db; -fx-opacity: 0.6;"/>
+            </VBox>
 
-    <HBox spacing="10.0" alignment="CENTER_LEFT">
-        <Label text="密码:" prefWidth="50.0" styleClass="normal-label" />
-        <PasswordField fx:id="txtPassword" HBox.hgrow="ALWAYS" promptText="请输入密码" styleClass="custom-text-field" />
-    </HBox>
+            <VBox spacing="20.0">
+                <HBox styleClass="aurora-input-wrapper" alignment="CENTER_LEFT">
+                    <SVGPath content="1" fill="#95a5a6" scaleX="0.6" scaleY="0.6"/>
+                    <TextField fx:id="txtUsername" HBox.hgrow="ALWAYS" promptText="账号" styleClass="aurora-text-field"/>
+                </HBox>
 
-    <VBox spacing="10.0" alignment="CENTER">
-        <Button fx:id="btnLogin" text="登 录" onAction="#onLoginAction"
-                prefWidth="220.0" styleClass="accent-button" />
+                <HBox styleClass="aurora-input-wrapper" alignment="CENTER_LEFT">
+                    <SVGPath content="1" fill="#95a5a6" scaleX="0.6" scaleY="0.6"/>
+                    <PasswordField fx:id="txtPassword" HBox.hgrow="ALWAYS" promptText="密码"
+                                   styleClass="aurora-text-field"/>
+                </HBox>
+            </VBox>
 
-        <Hyperlink text="修改服务器配置" onAction="#handleBackToSetup" styleClass="muted-label" style="-fx-font-size: 11px;"/>
+            <HBox alignment="CENTER_LEFT" spacing="5.0">
+                <CheckBox fx:id="chkRememberMe" text="记住我" styleClass="aurora-checkbox"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Hyperlink text="配置服务" onAction="#handleBackToSetup" styleClass="aurora-muted-link"/>
+            </HBox>
+
+            <Button fx:id="btnLogin" text="立即登录" onAction="#onLoginAction"
+                    prefWidth="180.0" prefHeight="20.0" styleClass="aurora-primary-button"/>
+
+            <Label fx:id="statusLabel" text="请登录以继续使用" wrapText="true" alignment="CENTER" styleClass="muted-label"/>
+        </VBox>
+
     </VBox>
-
-    <Label fx:id="statusLabel" text="请登录以继续使用" wrapText="true" alignment="CENTER" styleClass="muted-label" />
-
-</VBox>
+</StackPane>

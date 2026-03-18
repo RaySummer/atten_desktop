@@ -80,3 +80,74 @@
 .camera-controls-bar {
     -fx-padding: 15 10 15 10;
 }
+
+/* 主卡片：深色雅致风格 */
+.main-card {
+    -fx-background-color: #1e272e;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: #485460;
+    -fx-border-width: 1;
+    /* 增加外阴影需在代码中设置效果，此处先设置基础 */
+}
+
+/* 标题文字 */
+.window-title {
+    -fx-text-fill: #d2dae2;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+/* 现代退出按钮：圆形呼吸感 */
+.modern-exit-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 50;
+    -fx-cursor: hand;
+    -fx-transition: 0.3s;
+}
+
+.modern-exit-button:hover {
+    -fx-background-color: #ff3f34;
+}
+
+.modern-exit-button:hover SVGPath {
+    -fx-fill: white;
+}
+
+/* 输入框优化 */
+.modern-text-field, .modern-combo-box {
+    -fx-background-color: #2f3542;
+    -fx-text-fill: white;
+    -fx-background-radius: 6;
+    -fx-padding: 8;
+    -fx-border-color: #57606f;
+    -fx-border-radius: 6;
+}
+
+.modern-text-field:focused {
+    -fx-border-color: #1e90ff;
+    -fx-border-width: 1.5;
+}
+
+/* 渐变按钮 */
+.primary-gradient-button {
+    -fx-background-color: linear-gradient(to right, #1e90ff, #3742fa);
+    -fx-text-fill: white;
+    -xml-font-weight: bold;
+    -fx-background-radius: 20;
+    -fx-cursor: hand;
+}
+
+.primary-gradient-button:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(30, 144, 255, 0.4), 10, 0, 0, 0);
+}
+
+.field-label {
+    -fx-text-fill: #a4b0be;
+    -fx-font-size: 12px;
+}
+
+.status-text {
+    -fx-text-fill: #747d8c;
+    -fx-font-size: 11px;
+}

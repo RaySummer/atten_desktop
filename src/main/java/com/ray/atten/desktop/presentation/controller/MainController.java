@@ -21,6 +21,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.Window;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
 
@@ -306,26 +307,59 @@ public class MainController {
 
     @FXML
     private void handleLogout(ActionEvent event) {
-        // 1. 弹出确认框（可选，增加用户体验）
         boolean confirm = CustomAlertDialog.showConfirmation("确认注销", "您确定要注销当前登录状态吗？");
         if (!confirm) return;
 
-        // 2. 清除内存中的会话信息
         SessionContext.logout();
-
-        // 3. 清除本地持久化的 Token，防止下次启动自动登录
         ConfigRepo.saveToken(null);
 
-        // 4. 跳转回登录界面
         try {
-            // 获取当前窗口
-            Stage stage = (Stage) rootStackPane.getScene().getWindow();
+            // 1. 获取并关闭当前主窗口
+            Stage currentStage = (Stage) rootStackPane.getScene().getWindow();
+            currentStage.close();
 
-            // 使用 ViewManager 进行切换
-            ViewManager.switchView(stage, "/view/LoginView.fxml", springContext, "系统登录");
+            // 2. 创建一个全新的登录窗口 Stage
+            Stage loginStage = new Stage();
+
+            // 💡 关键：重新设置登录页需要的无边框透明样式
+            loginStage.initStyle(StageStyle.TRANSPARENT);
+
+            // 3. 重新调用 ViewManager 加载登录页
+            // 确保 ViewManager 内部有处理 Scene 透明度的代码（见下文）
+            ViewManager.switchView(loginStage, "/view/LoginView.fxml", springContext, "系统登录");
 
         } catch (Exception e) {
+            e.printStackTrace();
             CustomAlertDialog.showError("错误", "注销失败，请重启程序");
         }
     }
+
+    public static void switchView(Stage stage, String fxmlPath, ApplicationContext ctx, String title) throws Exception {
+        FXMLLoader loader = new FXMLLoader(ViewManager.class.getResource(fxmlPath));
+        loader.setControllerFactory(ctx::getBean);
+        Parent root = loader.load();
+
+        Scene scene = stage.getScene();
+        if (scene == null) {
+            scene = new Scene(root);
+            stage.setScene(scene);
+        } else {
+            scene.setRoot(root);
+        }
+
+        // 💡 关键修复点 A：重新加载全局 CSS
+        scene.getStylesheets().clear(); // 先清理旧的，防止主界面的 sidebar 样式污染登录页
+        scene.getStylesheets().add(ViewManager.class.getResource("/css/style.css").toExternalForm());
+        scene.getStylesheets().add(ViewManager.class.getResource("/css/login-style.css").toExternalForm());
+
+        // 💡 关键修复点 B：如果是登录页，强制设置背景透明
+        if (fxmlPath.contains("LoginView")) {
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+        }
+
+        stage.setTitle(title);
+        stage.centerOnScreen();
+        stage.show();
+    }
+
 }
