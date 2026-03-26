@@ -145,4 +145,35 @@ public class OaEmployeeService {
         }
     }
 
+    public void saveSyncData(SyncRequest request) throws Exception {
+        String requestBodyJson = objectMapper.writeValueAsString(request);
+
+        // 2. 執行 HTTP POST 請求
+        // 假設您的 HttpClient 有一個方法 doGet/doPost，這裡使用 doPost
+        String responseJson = HttpClientUtil.doPost(AppConstants.getSaveSyncData(), requestBodyJson);
+
+        // 3. 解析響應，檢查同步結果
+        try {
+            JsonNode rootNode = objectMapper.readTree(responseJson);
+
+            String status = rootNode.get("status").asText();
+            String msg = rootNode.get("msg").asText();
+
+            // 如果狀態碼不是 200，則拋出異常
+            if (!"200".equals(status)) {
+                // 將 atten_middle 返回的錯誤信息拋出，以便 SyncGroupController 捕獲並顯示
+                throw new IOException("同步到考勤機失敗: " + msg);
+            }
+
+            // 如果需要處理 content 中的詳細成功或失敗信息，可以在這裡添加邏輯
+
+        } catch (IOException e) {
+            // 重新拋出網絡或解析異常
+            throw e;
+        } catch (Exception e) {
+            // 處理 JSON 處理過程中發生的其他異常
+            throw new IOException("解析同步響應失敗: " + e.getMessage(), e);
+        }
+    }
+
 }

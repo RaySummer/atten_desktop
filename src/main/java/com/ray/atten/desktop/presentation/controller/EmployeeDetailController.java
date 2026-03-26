@@ -211,30 +211,69 @@ public class EmployeeDetailController {
 
     @FXML
     private void handleConfirm() {
-        if (employee != null) {
-            // 1. 获取选中的设备组数据
-            ObservableList<String> selectedGroups = deviceGroupCheckComboBox.getCheckModel().getCheckedItems();
+        if (employee == null) return;
 
-            // 2. 将选中的组绑定到对象（假设模型有此字段）
-            // employee.setAttendanceGroups(new ArrayList<>(selectedGroups));
+        // 1. 组装数据到 SyncRequest DTO
+        SyncRequest syncRequest = new SyncRequest();
+        syncRequest.setPin(employee.getPin());
+        syncRequest.setName(employee.getName());
 
-            System.out.println("确认保存 - 关联设备组: " + String.join(", ", selectedGroups));
-
-            // 3. 处理照片和指纹
-            if (currentPhoto != null) {
-                employee.setPhotoBase64(ImageConverter.javafxImageToBase64(currentPhoto));
-            }
-            if (currentFingerprint1Base64 != null) {
-                employee.setFingerprint(currentFingerprint1Base64);
-            }
-
-            lblMessage.setText("保存成功！");
+        // 处理当前最新的照片 (优先使用内存中新拍摄/上传的)
+        if (currentPhoto != null) {
+            syncRequest.setPhotoBase64(ImageConverter.javafxImageToBase64(currentPhoto));
+        } else {
+            syncRequest.setPhotoBase64(employee.getPhotoBase64());
         }
 
-        if (onCloseRequest != null) {
-            onCloseRequest.run();
+        // 处理当前最新的指纹
+        if (currentFingerprint1Base64 != null) {
+            syncRequest.setFingerprint(currentFingerprint1Base64);
+        } else {
+            syncRequest.setFingerprint(employee.getFingerprint());
         }
-        cleanup();
+
+        // 2. 开启异步任务保存到数据库
+        loadingManager.show("正在保存数据...");
+        confirmButton.setDisable(true);
+
+        Task<Void> saveTask = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                // 调用 Service 保存到数据库（employee_sync_queue 表）
+                oaEmployeeService.saveSyncData(syncRequest);
+                return null;
+            }
+        };
+
+        saveTask.setOnSucceeded(e -> {
+            loadingManager.hide();
+            confirmButton.setDisable(false);
+            Platform.runLater(() -> {
+                // 更新内存中的 employee 对象，确保 UI 列表同步
+                employee.setPhotoBase64(syncRequest.getPhotoBase64());
+                employee.setFingerprint(syncRequest.getFingerprint());
+
+                lblMessage.setText("保存并同步队列成功！");
+
+                // 执行关闭逻辑
+                if (onCloseRequest != null) {
+                    onCloseRequest.run();
+                }
+                cleanup();
+            });
+        });
+
+        saveTask.setOnFailed(e -> {
+            loadingManager.hide();
+            confirmButton.setDisable(false);
+            Throwable ex = saveTask.getException();
+            Platform.runLater(() -> {
+                CustomAlertDialog.showError("保存失败", "无法写入数据库: " + ex.getMessage());
+                lblMessage.setText("保存失败，请重试");
+            });
+        });
+
+        new Thread(saveTask).start();
     }
 
     // --- 拍照、上传、指纹及其他逻辑 (保持不变) ---

@@ -133,6 +133,13 @@ public class AppConstants {
     }
 
     /**
+     * 保存员工指纹/照片
+     */
+    public static String getSaveSyncData() {
+        return API_BASE_URL + "/api/sync/save-data-employee";
+    }
+
+    /**
      * 同步考勤数据
      */
     public static String getSyncAttendanceAPI() {

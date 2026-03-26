@@ -22,7 +22,7 @@
                         <children>
                             <ImageView fitHeight="100.0" fitWidth="100.0" pickOnBounds="true" preserveRatio="true">
                                 <image>
-                                    <Image url="@/images/logo_big.png"/>
+                                    <Image url="@/images/logo.png"/>
                                 </image>
                             </ImageView>
                             <Label text="考勤管理系统" styleClass="sidebar-title">
