@@ -6,6 +6,8 @@ import com.zkteco.biometric.FingerprintSensorEx; // ZKFinger SDK 核心类
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.Objects;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -42,46 +44,62 @@ public class FingerprintUtil {
      * @return 成功返回 true，失败返回 false
      */
     public static boolean initAndConnect() {
-        if (deviceHandle != 0) {
-            System.out.println("Fingerprint device already connected.");
-            return true;
-        }
+        System.out.println("Try connect ");
+        try {
+            if (deviceHandle != 0) {
+                System.out.println("Fingerprint device already connected.");
+                return true;
+            }
+            if (!isSDKInitialized) {
+                int ret = FingerprintSensorEx.Init();
+                if (ret != ZK_SUCCESS) {
+                    // 打包环境下，用弹窗代替控制台打印
+                    JOptionPane.showMessageDialog(null, "SDK初始化失败，错误码: " + ret);
+                    return false;
+                }
+                isSDKInitialized = true;
+            }
 
-        // 1. 初始化 SDK 资源 [cite: 76]
-        if (!isSDKInitialized) {
-            int ret = FingerprintSensorEx.Init();
-            if (ret != ZK_SUCCESS) {
-                System.err.println("Fingerprint SDK Init failed. Code: " + ret);
+            // 1. 初始化 SDK 资源 [cite: 76]
+            if (!isSDKInitialized) {
+                int ret = FingerprintSensorEx.Init();
+                if (ret != ZK_SUCCESS) {
+                    System.err.println("Fingerprint SDK Init failed. Code: " + ret);
+                    return false;
+                }
+                isSDKInitialized = true;
+            }
+
+            // 2. 初始化算法库 (获取算法句柄) [cite: 212]
+            dbHandle = FingerprintSensorEx.DBInit();
+            if (dbHandle == 0) {
+                System.err.println("Fingerprint DBInit failed.");
                 return false;
             }
-            isSDKInitialized = true;
-        }
 
-        // 2. 初始化算法库 (获取算法句柄) [cite: 212]
-        dbHandle = FingerprintSensorEx.DBInit();
-        if (dbHandle == 0) {
-            System.err.println("Fingerprint DBInit failed.");
+            // 3. 连接设备 (index=0 表示第一个设备) [cite: 96]
+            deviceHandle = FingerprintSensorEx.OpenDevice(0);
+            if (deviceHandle == 0) {
+                System.err.println("Failed to connect Live20R. OpenDevice failed. Code: -1002 or -1003 etc. See 4.2");
+                // 连接失败时释放算法库
+                FingerprintSensorEx.DBFree(dbHandle);
+                dbHandle = 0;
+                return false;
+            }
+
+            // 4. 获取图像参数 (宽度和高度，用于采集时预分配缓存) [cite: 218]
+            if (!getImageParameters(deviceHandle)) {
+                // 失败时不关闭连接，但打印错误
+                System.err.println("Failed to get image parameters. Capture may fail.");
+            }
+
+            System.out.println("Live20R connected. Device Handle: " + deviceHandle + ", DB Handle: " + dbHandle);
+            return true;
+        } catch (HeadlessException e) {
+            JOptionPane.showMessageDialog(null, "致命错误: " + e.toString() + "\n请检查DLL是否完整");
+            e.printStackTrace();
             return false;
         }
-
-        // 3. 连接设备 (index=0 表示第一个设备) [cite: 96]
-        deviceHandle = FingerprintSensorEx.OpenDevice(0);
-        if (deviceHandle == 0) {
-            System.err.println("Failed to connect Live20R. OpenDevice failed. Code: -1002 or -1003 etc. See 4.2");
-            // 连接失败时释放算法库
-            FingerprintSensorEx.DBFree(dbHandle);
-            dbHandle = 0;
-            return false;
-        }
-
-        // 4. 获取图像参数 (宽度和高度，用于采集时预分配缓存) [cite: 218]
-        if (!getImageParameters(deviceHandle)) {
-            // 失败时不关闭连接，但打印错误
-            System.err.println("Failed to get image parameters. Capture may fail.");
-        }
-
-        System.out.println("Live20R connected. Device Handle: " + deviceHandle + ", DB Handle: " + dbHandle);
-        return true;
     }
 
     /**
@@ -151,8 +169,10 @@ public class FingerprintUtil {
     }
 
     // ==================== 2. 核心业务方法 ====================
+
     /**
      * 採集指紋並提取模板（帶重試機制，解決 Code -8 不穩定問題）
+     *
      * @param timeoutMillis 最大超時時間（毫秒），防止無限循環，例如設置為 5000 (5秒)
      * @return 採集結果，超時或失敗返回 null
      */

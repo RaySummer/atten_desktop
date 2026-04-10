@@ -465,31 +465,40 @@ public class EmployeeDetailController {
         this.isConnecting = true;
         setUiConnectingState(isReconnect);
 
-        // 直接提交一个任务即可，不要嵌套 submit
         Task<Boolean> connectTask = new Task<Boolean>() {
             @Override
-            protected Boolean call() throws Exception {
-                // 这里直接调用，不要再往 executor 里扔了
-                // 如果 initAndConnect 内部有阻塞，这里会等待
-                return FingerprintUtil.initAndConnect();
+            protected Boolean call() {
+                try {
+                    // 强制触发一次类加载，看 DLL 在不在
+                    return FingerprintUtil.initAndConnect();
+                } catch (Throwable t) {
+                    // 如果是打包导致的 DLL 缺失，这里会抓住 Error
+                    Platform.runLater(() -> {
+                        CustomAlertDialog.showError("驱动异常", "无法加载指纹仪驱动模块:\n" + t.toString());
+                    });
+                    return false;
+                }
             }
         };
 
         connectTask.setOnSucceeded(e -> {
             this.isConnecting = false;
-            boolean success = connectTask.getValue();
-            updateConnectionStatus(success);
+            updateConnectionStatus(connectTask.getValue());
         });
 
         connectTask.setOnFailed(e -> {
             this.isConnecting = false;
             Throwable ex = connectTask.getException();
-            FingerprintUtil.destroy(); // 发生异常时清理
+            // 哪怕失败了也弹个窗，不要只写日志
+            Platform.runLater(() -> {
+                CustomAlertDialog.showError("连接崩溃", "指纹机连接线程发生错误: " + (ex != null ? ex.getMessage() : "未知"));
+            });
             updateConnectionStatus(false);
         });
 
-        // 建议给这个任务单独开一个线程，或者确认 executor 线程数 > 1
-        new Thread(connectTask).start();
+        Thread t = new Thread(connectTask);
+        t.setDaemon(true); // 守护线程，防止程序关闭不了
+        t.start();
     }
 
     private void setUiConnectingState(boolean isReconnect) {
