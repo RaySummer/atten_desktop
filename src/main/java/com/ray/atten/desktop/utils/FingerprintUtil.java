@@ -54,7 +54,7 @@ public class FingerprintUtil {
                 int ret = FingerprintSensorEx.Init();
                 if (ret != ZK_SUCCESS) {
                     // 打包环境下，用弹窗代替控制台打印
-                    JOptionPane.showMessageDialog(null, "SDK初始化失败，错误码: " + ret);
+                    CustomAlertDialog.showError("驱动异常", "SDK初始化失败，错误码: " + ret);
                     return false;
                 }
                 isSDKInitialized = true;
@@ -96,7 +96,7 @@ public class FingerprintUtil {
             System.out.println("Live20R connected. Device Handle: " + deviceHandle + ", DB Handle: " + dbHandle);
             return true;
         } catch (HeadlessException e) {
-            JOptionPane.showMessageDialog(null, "致命错误: " + e.toString() + "\n请检查DLL是否完整");
+            CustomAlertDialog.showError("错误", "致命错误: 请检查DLL是否完整");
             e.printStackTrace();
             return false;
         }

@@ -216,7 +216,7 @@ public class AdminDetailController {
             saveButton.setDisable(false);
             log.error("保存管理员失败", saveTask.getException());
             // 这里已经有失败提示了
-            CustomAlertDialog.showError("操作失败", "保存失败：" + saveTask.getException().getMessage());
+            CustomAlertDialog.showError("操作失败", "保存失败");
         });
 
         new Thread(saveTask).start();

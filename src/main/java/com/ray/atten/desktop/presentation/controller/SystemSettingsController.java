@@ -129,7 +129,7 @@ public class SystemSettingsController {
             updateStatusLabel.setStyle("-fx-text-fill: #F44336;"); // 红色提示
 
             Throwable ex = task.getException();
-            CustomAlertDialog.showError("检查失败", "无法获取更新信息：" + ex.getMessage());
+            CustomAlertDialog.showError("检查失败", "无法获取更新信息");
         });
 
         new Thread(task).start();

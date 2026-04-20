@@ -268,7 +268,7 @@ public class EmployeeDetailController {
             confirmButton.setDisable(false);
             Throwable ex = saveTask.getException();
             Platform.runLater(() -> {
-                CustomAlertDialog.showError("保存失败", "无法写入数据库: " + ex.getMessage());
+                CustomAlertDialog.showError("保存失败", "无法写入数据库");
                 lblMessage.setText("保存失败，请重试");
             });
         });
@@ -454,7 +454,7 @@ public class EmployeeDetailController {
                 loadingManager.showTimeout(() -> performSynchronization(requests));
             } else {
                 loadingManager.hide();
-                CustomAlertDialog.showError("同步失败", "错误详情: " + exception.getMessage());
+                CustomAlertDialog.showError("同步失败", "错误");
             }
         });
 
@@ -474,7 +474,7 @@ public class EmployeeDetailController {
                 } catch (Throwable t) {
                     // 如果是打包导致的 DLL 缺失，这里会抓住 Error
                     Platform.runLater(() -> {
-                        CustomAlertDialog.showError("驱动异常", "无法加载指纹仪驱动模块:\n" + t.toString());
+                        CustomAlertDialog.showError("驱动异常", "无法加载指纹仪驱动模块");
                     });
                     return false;
                 }
@@ -491,7 +491,7 @@ public class EmployeeDetailController {
             Throwable ex = connectTask.getException();
             // 哪怕失败了也弹个窗，不要只写日志
             Platform.runLater(() -> {
-                CustomAlertDialog.showError("连接崩溃", "指纹机连接线程发生错误: " + (ex != null ? ex.getMessage() : "未知"));
+                CustomAlertDialog.showError("连接崩溃", "指纹机连接线程发生错误");
             });
             updateConnectionStatus(false);
         });

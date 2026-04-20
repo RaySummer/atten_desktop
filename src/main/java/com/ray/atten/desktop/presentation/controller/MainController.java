@@ -274,7 +274,7 @@ public class MainController {
                 Platform.runLater(() -> {
                     progressStage.close(); // 确保关闭
                     Throwable ex = downloadTask.getException();
-                    CustomAlertDialog.showError("更新失败", "下载包损坏或网络超时: " + ex.getMessage());
+                    CustomAlertDialog.showError("更新失败", "下载包损坏或网络超时");
                 });
             });
 

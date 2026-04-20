@@ -210,7 +210,7 @@ public class DeviceEditController {
                 loadingManager.showTimeout(this::handleSave);
             } else {
                 exception.printStackTrace();
-                CustomAlertDialog.showError("系统错误", "网络异常: " + exception.getMessage());
+                CustomAlertDialog.showError("系统错误", "网络异常 ");
             }
         });
 

@@ -225,7 +225,7 @@ public class SyncGroupController {
             allGroups.setAll(task.getValue());
         });
         task.setOnFailed(e -> {
-            CustomAlertDialog.showError("", "加载考勤组失败: " + task.getException().getMessage());
+            CustomAlertDialog.showError("", "加载考勤组失败");
         });
         new Thread(task).start();
     }
@@ -297,7 +297,7 @@ public class SyncGroupController {
                 loadingManager.showTimeout(() -> performSynchronization(requests));
             } else {
                 loadingManager.hide();
-                CustomAlertDialog.showError("", "同步失败: " + syncTask.getException().getMessage());
+                CustomAlertDialog.showError("", "同步失败");
             }
         });
 

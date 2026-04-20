@@ -429,7 +429,7 @@ public class EmployeeListController {
             detailContainer.getChildren().setAll(node);
             showDrawer();
         } catch (IOException e) {
-            CustomAlertDialog.showError("", "无法加载界面: " + fxmlPath);
+            CustomAlertDialog.showError("", "无法加载界面");
         }
     }
 

@@ -118,7 +118,7 @@ public class BadgePrintController {
                 }
             });
         } catch (Exception e) {
-            CustomAlertDialog.showError("错误", "无法加载模板列表: " + e.getMessage());
+            CustomAlertDialog.showError("错误", "无法加载模板列表");
         }
     }
 
@@ -151,7 +151,7 @@ public class BadgePrintController {
 
         } catch (Exception e) {
             e.printStackTrace();
-            com.ray.atten.desktop.utils.CustomAlertDialog.showError("生成失败", e.getMessage());
+            com.ray.atten.desktop.utils.CustomAlertDialog.showError("生成失败", "生成失败");
         }
     }
 
