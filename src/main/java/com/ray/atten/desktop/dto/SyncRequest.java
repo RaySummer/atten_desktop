@@ -1,8 +1,11 @@
 package com.ray.atten.desktop.dto;
 
+import com.ray.atten.desktop.model.EmployeeSync;
 import lombok.*;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Getter
@@ -15,14 +18,8 @@ public class SyncRequest implements Serializable {
 
     private String name;
 
-    private String fingerprint;
-
-    private Integer fingerSize;
-
-    private String photoBase64;
-
-    private Integer photoSize;
-
     private String deviceSn;
+
+    private List<EmployeeSync> fingerFidList = new ArrayList<>();
 
 }

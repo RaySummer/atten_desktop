@@ -10,6 +10,7 @@ import com.ray.atten.desktop.utils.LoadingManager;
 import javafx.animation.TranslateTransition;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -49,16 +50,26 @@ public class EmployeeListController {
     @Autowired
     private LoadingManager loadingManager;
 
-    @FXML private AnchorPane drawerPane;
-    @FXML private VBox drawerContent;
-    @FXML private StackPane detailContainer;
-    @FXML private TextField queryField;
-    @FXML private Label statusLabel;
-    @FXML private Pagination pagination;
-    @FXML private ComboBox<Integer> pageSizeComboBox;
-    @FXML private ChoiceBox<String> statusChoiceBox;
-    @FXML private ChoiceBox<String> fingerprintChoiceBox;
-    @FXML private ChoiceBox<String> photoChoiceBox;
+    @FXML
+    private AnchorPane drawerPane;
+    @FXML
+    private VBox drawerContent;
+    @FXML
+    private StackPane detailContainer;
+    @FXML
+    private TextField queryField;
+    @FXML
+    private Label statusLabel;
+    @FXML
+    private Pagination pagination;
+    @FXML
+    private ComboBox<Integer> pageSizeComboBox;
+    @FXML
+    private ChoiceBox<String> statusChoiceBox;
+    @FXML
+    private ChoiceBox<String> fingerprintChoiceBox;
+    @FXML
+    private ChoiceBox<String> photoChoiceBox;
 
     // --- TableView 控件 ---
     private TableView<OaEmployee> employeeTable;
@@ -118,7 +129,8 @@ public class EmployeeListController {
         selectColumn = new TableColumn<>();
         selectColumn.setGraphic(selectAllCheckBox);
         selectColumn.setSortable(false);
-        selectColumn.setMinWidth(40); selectColumn.setMaxWidth(40);
+        selectColumn.setMinWidth(40);
+        selectColumn.setMaxWidth(40);
 
         // 绑定 CheckBox 渲染
         selectColumn.setCellValueFactory(data -> data.getValue().selectedProperty());
@@ -136,8 +148,10 @@ public class EmployeeListController {
         actionColumn = new TableColumn<>("操作");
 
         // 设置列宽
-        fingerprintColumn.setMinWidth(65); fingerprintColumn.setMaxWidth(80);
-        photoColumn.setMinWidth(65); photoColumn.setMaxWidth(80);
+        fingerprintColumn.setMinWidth(65);
+        fingerprintColumn.setMaxWidth(80);
+        photoColumn.setMinWidth(65);
+        photoColumn.setMaxWidth(80);
         entryDateColumn.setMinWidth(100);
         companyColumn.setMinWidth(120);
         actionColumn.setMinWidth(140);
@@ -148,8 +162,24 @@ public class EmployeeListController {
         companyColumn.setCellValueFactory(new PropertyValueFactory<>("company"));
         deptColumn.setCellValueFactory(new PropertyValueFactory<>("dept"));
         officeLocation.setCellValueFactory(new PropertyValueFactory<>("officeLocation"));
-        fingerprintColumn.setCellValueFactory(new PropertyValueFactory<>("fingerprint"));
-        photoColumn.setCellValueFactory(new PropertyValueFactory<>("photoBase64"));
+        fingerprintColumn.setCellValueFactory(data -> {
+            OaEmployee emp = data.getValue();
+            // 检查 syncList 中是否包含 type 为 "finger" 且数据不为空的记录
+            boolean hasFinger = emp.getSyncList() != null && emp.getSyncList().stream()
+                    .anyMatch(s -> "finger".equals(s.getType()) && s.getBase64Data() != null && !s.getBase64Data().isEmpty());
+
+            // 返回一个虚拟的字符串供 setupBinaryStatusColumnFormatting 使用
+            return new SimpleStringProperty(hasFinger ? "EXISTS" : "");
+        });
+        photoColumn.setCellValueFactory(data -> {
+            OaEmployee emp = data.getValue();
+            // 优先检查 photoBase64 字段，如果没有，检查 syncList
+            boolean hasPhoto = (emp.getPhotoBase64() != null && !emp.getPhotoBase64().isEmpty()) ||
+                    (emp.getSyncList() != null && emp.getSyncList().stream()
+                            .anyMatch(s -> "photo".equals(s.getType()) && s.getBase64Data() != null && !s.getBase64Data().isEmpty()));
+
+            return new SimpleStringProperty(hasPhoto ? "EXISTS" : "");
+        });
         inServiceColumn.setCellValueFactory(new PropertyValueFactory<>("inService"));
         entryDateColumn.setCellValueFactory(new PropertyValueFactory<>("entryDate"));
 
@@ -231,14 +261,34 @@ public class EmployeeListController {
         fingerprintChoiceBox.getItems().addAll("全部", "已有", "未录");
         fingerprintChoiceBox.setValue("全部");
         fingerprintChoiceBox.getSelectionModel().selectedItemProperty().addListener((o, ol, nv) -> {
-            hasFingerprint = "已有".equals(nv) ? Boolean.TRUE : ("未录".equals(nv) ? Boolean.FALSE : null);
+            switch (nv) {
+                case "已有":
+                    hasFingerprint = true;
+                    break;
+                case "未录":
+                    hasFingerprint = false;
+                    break;
+                default:
+                    hasFingerprint = null;
+                    break;
+            }
             updatePaginationMetadata();
         });
 
         photoChoiceBox.getItems().addAll("全部", "已有", "未录");
         photoChoiceBox.setValue("全部");
         photoChoiceBox.getSelectionModel().selectedItemProperty().addListener((o, ol, nv) -> {
-            hasPhoto = "已有".equals(nv) ? Boolean.TRUE : ("未录".equals(nv) ? Boolean.FALSE : null);
+            switch (nv) {
+                case "已有":
+                    hasPhoto = true;
+                    break;
+                case "未录":
+                    hasPhoto = false;
+                    break;
+                default:
+                    hasPhoto = null;
+                    break;
+            }
             updatePaginationMetadata();
         });
     }
@@ -288,14 +338,26 @@ public class EmployeeListController {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                setAlignment(Pos.CENTER);
-                if (empty) {
+
+                // 1. 重要：如果该行是空的（没有对应的数据对象）
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
                     setText(null);
-                    setStyle("");
+                    setGraphic(null);
+                    setStyle(""); // 彻底清除背景和样式
                 } else {
-                    boolean exists = (item != null && !item.trim().isEmpty());
-                    setText(exists ? "是" : "否");
-                    setStyle(exists ? "-fx-text-fill: #2ecc71; -fx-font-weight: bold;" : "-fx-text-fill: #ffa89c;");
+                    // 2. 该行有数据，执行逻辑判断
+                    setAlignment(Pos.CENTER);
+
+                    // 这里的 item 是我们在 CellValueFactory 中定义的 "EXISTS" 或 ""
+                    boolean exists = (item != null && !item.isEmpty());
+
+                    if (exists) {
+                        setText("是");
+                        setStyle("-fx-text-fill: #2ecc71; -fx-font-weight: bold;");
+                    } else {
+                        setText("否");
+                        setStyle("-fx-text-fill: #ffa89c;");
+                    }
                 }
             }
         });
@@ -305,7 +367,17 @@ public class EmployeeListController {
         statusChoiceBox.getItems().addAll("全部", "在职", "离职");
         statusChoiceBox.setValue("全部");
         statusChoiceBox.getSelectionModel().selectedItemProperty().addListener((o, ol, nv) -> {
-            currentInServiceStatus = "在职".equals(nv) ? true : ("离职".equals(nv) ? false : null);
+            switch (nv) {
+                case "在职":
+                    currentInServiceStatus = true;
+                    break;
+                case "离职":
+                    currentInServiceStatus = false;
+                    break;
+                default:
+                    currentInServiceStatus = null;
+                    break;
+            }
             updatePaginationMetadata();
         });
     }
@@ -315,6 +387,7 @@ public class EmployeeListController {
             private final Button detailButton = new Button("录入详情");
             private final Button syncButton = new Button("同步");
             private final HBox pane = new HBox(10, detailButton, syncButton);
+
             {
                 detailButton.getStyleClass().add("action-btn-detail");
                 detailButton.setStyle("-fx-text-fill: #ffffff;");
@@ -324,7 +397,9 @@ public class EmployeeListController {
                 syncButton.setOnAction(event -> openViewInDrawer("/view/SyncGroupView.fxml", getTableView().getItems().get(getIndex())));
                 pane.setAlignment(Pos.CENTER);
             }
-            @Override protected void updateItem(Void item, boolean empty) {
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
                 setGraphic(empty ? null : pane);
             }
@@ -333,7 +408,8 @@ public class EmployeeListController {
 
     private void setupInServiceColumnFormatting() {
         inServiceColumn.setCellFactory(column -> new TableCell<OaEmployee, Boolean>() {
-            @Override protected void updateItem(Boolean item, boolean empty) {
+            @Override
+            protected void updateItem(Boolean item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) setText(null);
                 else {
@@ -346,7 +422,8 @@ public class EmployeeListController {
 
     private void setupDateTimeColumnFormatting(TableColumn<OaEmployee, LocalDateTime> col) {
         col.setCellFactory(c -> new TableCell<OaEmployee, LocalDateTime>() {
-            @Override protected void updateItem(LocalDateTime it, boolean em) {
+            @Override
+            protected void updateItem(LocalDateTime it, boolean em) {
                 super.updateItem(it, em);
                 setText((em || it == null) ? null : AppConstants.dateTimeFormatter(it, AppConstants.YYYY_MM_DD));
             }
@@ -355,7 +432,8 @@ public class EmployeeListController {
 
     private void setupCenterAlignmentForTextColumn(TableColumn<OaEmployee, String> col) {
         col.setCellFactory(c -> new TableCell<OaEmployee, String>() {
-            @Override protected void updateItem(String it, boolean em) {
+            @Override
+            protected void updateItem(String it, boolean em) {
                 super.updateItem(it, em);
                 setAlignment(Pos.CENTER);
                 setText((em || it == null) ? null : it);
@@ -378,8 +456,10 @@ public class EmployeeListController {
     private Node createPage(int pageIndex) {
         loadEmployeeData(pageIndex);
         AnchorPane ap = new AnchorPane(employeeTable);
-        AnchorPane.setTopAnchor(employeeTable, 0.0); AnchorPane.setBottomAnchor(employeeTable, 0.0);
-        AnchorPane.setLeftAnchor(employeeTable, 0.0); AnchorPane.setRightAnchor(employeeTable, 0.0);
+        AnchorPane.setTopAnchor(employeeTable, 0.0);
+        AnchorPane.setBottomAnchor(employeeTable, 0.0);
+        AnchorPane.setLeftAnchor(employeeTable, 0.0);
+        AnchorPane.setRightAnchor(employeeTable, 0.0);
         return ap;
     }
 
@@ -416,11 +496,19 @@ public class EmployeeListController {
             Object controller = loader.getController();
             if (controller instanceof EmployeeDetailController) {
                 ((EmployeeDetailController) controller).setEmployeeInfo((OaEmployee) data);
-                ((EmployeeDetailController) controller).setOnCloseRequest(this::closeDrawer);
+                ((EmployeeDetailController) controller).setOnCloseRequest(() -> {
+                    // 1. 关闭侧边栏
+                    closeDrawer();
+                    // 2. 重新加载当前页数据 (这样录入状态就会从“否”变“是”)
+                    loadEmployeeData(pagination.getCurrentPageIndex());
+                });
             } else if (controller instanceof SyncGroupController) {
                 List<OaEmployee> employees = (data instanceof List) ? (List<OaEmployee>) data : Collections.singletonList((OaEmployee) data);
                 ((SyncGroupController) controller).setEmployeesToSync(employees);
-                ((SyncGroupController) controller).setOnCloseRequest(this::closeDrawer);
+                ((SyncGroupController) controller).setOnCloseRequest(() -> {
+                    closeDrawer();
+                    refreshCurrentPage();
+                });
             } else if (controller instanceof BadgePrintController) {
                 List<OaEmployee> employees = (data instanceof List) ? (List<OaEmployee>) data : Collections.singletonList((OaEmployee) data);
                 ((BadgePrintController) controller).setSelectedEmployees(employees);
@@ -438,11 +526,13 @@ public class EmployeeListController {
         drawerPane.setVisible(true);
         drawerPane.setMouseTransparent(false);
         TranslateTransition tt = new TranslateTransition(Duration.millis(500), drawerContent);
-        tt.setFromX(550); tt.setToX(0);
+        tt.setFromX(550);
+        tt.setToX(0);
         tt.play();
     }
 
-    @FXML private void closeDrawer() {
+    @FXML
+    private void closeDrawer() {
         TranslateTransition tt = new TranslateTransition(Duration.millis(300), drawerContent);
         tt.setToX(550);
         tt.setOnFinished(e -> {
@@ -453,9 +543,19 @@ public class EmployeeListController {
         tt.play();
     }
 
-    @FXML private void handleOverlayClick(MouseEvent event) {
+    @FXML
+    private void handleOverlayClick(MouseEvent event) {
         if (event.getX() < (drawerPane.getWidth() - drawerContent.getWidth())) closeDrawer();
     }
 
-    @FXML private void handleSearch() { updatePaginationMetadata(); }
+    @FXML
+    private void handleSearch() {
+        updatePaginationMetadata();
+    }
+
+    private void refreshCurrentPage() {
+        // 重新加载当前页码的数据，不需要重新计算总页数
+        loadEmployeeData(pagination.getCurrentPageIndex());
+    }
+
 }

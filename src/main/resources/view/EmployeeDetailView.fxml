@@ -92,6 +92,19 @@
 
                     <VBox spacing="10.0" VBox.vgrow="ALWAYS" alignment="BOTTOM_CENTER">
                         <children>
+                            <VBox alignment="BOTTOM_CENTER" spacing="8.0">
+                                <children>
+                                    <StackPane styleClass="selector-box-box" maxWidth="180" maxHeight="100">
+                                        <VBox spacing="5.0">
+                                            <children>
+                                                <Label text="指纹列表:" styleClass="info-label" />
+                                                <ComboBox fx:id="fingerStatusComboBox" prefWidth="180.0"
+                                                          styleClass="styled-combo-box" promptText="选择手指"/>
+                                            </children>
+                                        </VBox>
+                                    </StackPane>
+                                </children>
+                            </VBox>
                             <Label fx:id="lblMessage" alignment="TOP_CENTER" wrapText="true" minHeight="60.0"
                                    text="提示语：设备连接失败/ 指纹录入失败/ 指纹比对不成功"
                                    styleClass="status-message-red"/>

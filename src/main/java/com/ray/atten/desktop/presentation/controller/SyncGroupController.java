@@ -23,9 +23,11 @@ import org.controlsfx.control.CheckComboBox;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -36,6 +38,8 @@ public class SyncGroupController {
     private TableView<OaEmployee> employeeTableView;
     @FXML
     private TableColumn<OaEmployee, Integer> rowNumberColumn;
+    // 注意：这里的 TableColumn 类型改为 <OaEmployee, OaEmployee>
+    // 或者干脆不显式绑定类型，因为我们要通过 cellFactory 处理整行对象
     @FXML
     private TableColumn<OaEmployee, String> pinColumn, nameColumn, fingerprintColumn, photoBase64Column;
     @FXML
@@ -53,9 +57,6 @@ public class SyncGroupController {
     @Autowired
     private OaEmployeeService oaEmployeeService;
 
-    @Autowired
-    private AttendanceService attendanceService;
-
     private ObservableList<OaEmployee> employeesToSync;
 
     @Autowired
@@ -64,7 +65,6 @@ public class SyncGroupController {
     private CheckComboBox<AttendanceGroup> groupCheckComboBox;
     private ObservableList<AttendanceGroup> allGroups = FXCollections.observableArrayList();
 
-    // 【关键】用于关闭抽屉的回调逻辑
     private Runnable onCloseRequest;
 
     public void setOnCloseRequest(Runnable onCloseRequest) {
@@ -76,9 +76,7 @@ public class SyncGroupController {
         confirmButton.setDisable(true);
         setupDateTimeColumnFormatting(entryDateColumn);
 
-        // 3. 初始化多选下拉框
         initGroupCheckComboBox();
-
         setupTableColumns();
         setupActionColumn();
     }
@@ -86,10 +84,9 @@ public class SyncGroupController {
     private void initGroupCheckComboBox() {
         groupCheckComboBox = new CheckComboBox<>(allGroups);
         groupCheckComboBox.setPrefWidth(250.0);
-        // 初始标题
         groupCheckComboBox.setTitle("请选择目标设备组");
 
-        groupCheckComboBox.setConverter(new javafx.util.StringConverter<AttendanceGroup>() {
+        groupCheckComboBox.setConverter(new javafx.util.StringConverter<>() {
             @Override
             public String toString(AttendanceGroup group) {
                 return group == null ? "" : group.getGroupName();
@@ -98,27 +95,20 @@ public class SyncGroupController {
             public AttendanceGroup fromString(String string) { return null; }
         });
 
-        // 【新增】监听选中项变化，实时更新下拉框显示的文字
         groupCheckComboBox.getCheckModel().getCheckedItems().addListener((ListChangeListener<AttendanceGroup>) c -> {
             ObservableList<AttendanceGroup> selectedItems = groupCheckComboBox.getCheckModel().getCheckedItems();
-
             if (selectedItems.isEmpty()) {
                 groupCheckComboBox.setTitle("请选择目标设备组");
             } else {
-                // 将所有选中的组名拼接起来，例如："办公室组, 车间组"
                 String combinedNames = selectedItems.stream()
                         .map(AttendanceGroup::getGroupName)
                         .collect(Collectors.joining(", "));
-
-                // 如果选得太多，显示 "已选 X 个组" 也可以，防止文字太长撑破布局
                 if (selectedItems.size() > 2) {
                     groupCheckComboBox.setTitle("已选择 " + selectedItems.size() + " 个设备组");
                 } else {
                     groupCheckComboBox.setTitle(combinedNames);
                 }
             }
-
-            // 别忘了更新同步按钮的状态
             updateConfirmButtonState();
         });
 
@@ -128,21 +118,33 @@ public class SyncGroupController {
 
     private void updateConfirmButtonState() {
         ObservableList<AttendanceGroup> selectedGroups = groupCheckComboBox.getCheckModel().getCheckedItems();
-        // 只有选了组，且待同步列表不为空，才启用按钮
         boolean hasSelectedGroups = !selectedGroups.isEmpty();
         boolean hasEmployees = employeesToSync != null && !employeesToSync.isEmpty();
         confirmButton.setDisable(!hasSelectedGroups || !hasEmployees);
     }
 
     private void setupTableColumns() {
+        // 保持存在的字段绑定
         pinColumn.setCellValueFactory(new PropertyValueFactory<>("pin"));
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         entryDateColumn.setCellValueFactory(new PropertyValueFactory<>("entryDate"));
 
-        setupExistenceColumn(fingerprintColumn, OaEmployee::getFingerprint);
+        // 2. 【核心修复】强制清空可能存在的旧 Factory
+        // 这样做可以覆盖 FXML 中可能隐藏的设置，确保安全
+        fingerprintColumn.setCellValueFactory(null);
+        photoBase64Column.setCellValueFactory(null);
+
+        // 3. 手动定义“有/无”的渲染逻辑
+        setupExistenceColumn(fingerprintColumn, emp -> {
+            // 这里的逻辑不依赖反射，而是直接调用 List 接口
+            boolean hasFinger = emp.getSyncList() != null &&
+                    emp.getSyncList().stream().anyMatch(s -> "finger".equals(s.getType()));
+            return hasFinger ? "EXISTS" : null;
+        });
+
         setupExistenceColumn(photoBase64Column, OaEmployee::getPhotoBase64);
 
-        rowNumberColumn.setCellFactory(col -> new TableCell<OaEmployee, Integer>() {
+        rowNumberColumn.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(Integer item, boolean empty) {
                 super.updateItem(item, empty);
@@ -156,17 +158,21 @@ public class SyncGroupController {
         });
     }
 
-    private void setupExistenceColumn(TableColumn<OaEmployee, String> column, Function<OaEmployee, String> valueGetter) {
-        column.setCellFactory(col -> new TableCell<OaEmployee, String>() {
+    private void setupExistenceColumn(TableColumn<OaEmployee, String> column, java.util.function.Function<OaEmployee, String> valueGetter) {
+        column.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty) {
+
+                // 必须检查当前行索引是否有效
+                if (empty || getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
                     setText(null);
+                    setStyle("");
                 } else {
                     OaEmployee employee = getTableView().getItems().get(getIndex());
                     String value = valueGetter.apply(employee);
                     boolean exists = value != null && !value.trim().isEmpty();
+
                     setText(exists ? "有" : "无");
                     setStyle(exists ? "-fx-text-fill: #27ae60; -fx-font-weight: bold;" : "-fx-text-fill: #7f8c8d;");
                     setAlignment(Pos.CENTER);
@@ -176,38 +182,28 @@ public class SyncGroupController {
     }
 
     private void setupActionColumn() {
-        actionColumn.setCellFactory(col -> new TableCell<OaEmployee, Void>() {
+        actionColumn.setCellFactory(col -> new TableCell<>() {
             private final Button deleteButton = new Button("移除");
-
             {
-                deleteButton.getStyleClass().add("action-btn-delete"); // 建议在CSS中统一定义
+                deleteButton.getStyleClass().add("action-btn-delete");
                 deleteButton.setOnAction(event -> handleDeleteEmployee(getTableView().getItems().get(getIndex())));
             }
-
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    setGraphic(deleteButton);
-                    setAlignment(Pos.CENTER);
-                }
+                setGraphic(empty ? null : deleteButton);
+                if (!empty) setAlignment(Pos.CENTER);
             }
         });
     }
 
     private void handleDeleteEmployee(OaEmployee employee) {
-        boolean isOk = CustomAlertDialog.showConfirmation("", "确定要从列表中移除员工 " + employee.getName() + " 吗？");
-        if (isOk) {
+        if (CustomAlertDialog.showConfirmation("", "确定要从列表中移除员工 " + employee.getName() + " 吗？")) {
             employeesToSync.remove(employee);
             updateConfirmButtonState();
         }
     }
 
-    /**
-     * 【核心入口】由 EmployeeListController 调用
-     */
     public void setEmployeesToSync(List<OaEmployee> employees) {
         this.employeesToSync = FXCollections.observableArrayList(employees);
         employeeTableView.setItems(this.employeesToSync);
@@ -215,31 +211,24 @@ public class SyncGroupController {
     }
 
     private void loadAttendanceGroups() {
-        Task<List<AttendanceGroup>> task = new Task<List<AttendanceGroup>>() {
+        Task<List<AttendanceGroup>> task = new Task<>() {
             @Override
-            protected List<AttendanceGroup> call() throws Exception {
+            protected List<AttendanceGroup> call() throws IOException {
                 return oaEmployeeService.getAttendanceGroups();
             }
         };
-        task.setOnSucceeded(e -> {
-            allGroups.setAll(task.getValue());
-        });
-        task.setOnFailed(e -> {
-            CustomAlertDialog.showError("", "加载考勤组失败");
-        });
+        task.setOnSucceeded(e -> allGroups.setAll(task.getValue()));
         new Thread(task).start();
     }
 
     @FXML
     private void handleConfirmSync() {
-        // 4. 获取所有选中的考勤组
         ObservableList<AttendanceGroup> selectedGroups = groupCheckComboBox.getCheckModel().getCheckedItems();
         if (selectedGroups.isEmpty()) return;
 
-        // 5. 提取并合并所有选中组的设备 SN (去重并用逗号分隔)
         String combinedSns = selectedGroups.stream()
                 .map(AttendanceGroup::getDeviceSnsString)
-                .filter(sns -> sns != null && !sns.isEmpty())
+                .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.joining(","));
 
@@ -248,17 +237,13 @@ public class SyncGroupController {
             return;
         }
 
-        // 构建同步请求
         List<SyncRequest> syncRequests = employeesToSync.stream()
                 .map(employee -> {
                     SyncRequest request = new SyncRequest();
                     request.setPin(employee.getPin());
                     request.setName(employee.getName());
-                    request.setFingerprint(employee.getFingerprint());
-                    request.setFingerSize(employee.getFingerSize());
-                    request.setPhotoBase64(employee.getPhotoBase64());
-                    request.setPhotoSize(employee.getPhotoSize());
-                    request.setDeviceSn(combinedSns); // 使用合并后的长 SN 字符串
+                    request.setFingerFidList(employee.getSyncList()); // 发送完整的生物识别列表
+                    request.setDeviceSn(combinedSns);
                     return request;
                 })
                 .collect(Collectors.toList());
@@ -267,9 +252,9 @@ public class SyncGroupController {
     }
 
     private void performSynchronization(List<SyncRequest> requests) {
-        loadingManager.show("正在执行......");
-        confirmButton.setDisable(true); // 防止重复点击
-        Task<Void> syncTask = new Task<Void>() {
+        loadingManager.show("正在执行同步......");
+        confirmButton.setDisable(true);
+        Task<Void> syncTask = new Task<>() {
             @Override
             protected Void call() throws Exception {
                 oaEmployeeService.syncEmployeesToGroup(requests);
@@ -280,20 +265,15 @@ public class SyncGroupController {
         syncTask.setOnSucceeded(e -> {
             loadingManager.hide();
             Platform.runLater(() -> {
-                // 1. 提示成功
                 CustomAlertDialog.showInfo("", "已成功发送 " + requests.size() + " 位员工同步请求。");
-                // 2. 调用抽屉关闭回调
-                if (onCloseRequest != null) {
-                    onCloseRequest.run();
-                }
+                if (onCloseRequest != null) onCloseRequest.run();
             });
         });
 
         syncTask.setOnFailed(e -> {
             confirmButton.setDisable(false);
             Throwable exception = syncTask.getException();
-            if (exception instanceof SocketTimeoutException || exception.getMessage().contains("timeout")) {
-                // 3. 超时显示重试按钮，重试逻辑就是再次调用本方法
+            if (exception instanceof SocketTimeoutException || (exception.getMessage() != null && exception.getMessage().contains("timeout"))) {
                 loadingManager.showTimeout(() -> performSynchronization(requests));
             } else {
                 loadingManager.hide();
@@ -305,7 +285,7 @@ public class SyncGroupController {
     }
 
     private void setupDateTimeColumnFormatting(TableColumn<OaEmployee, LocalDateTime> col) {
-        col.setCellFactory(c -> new TableCell<OaEmployee, LocalDateTime>() {
+        col.setCellFactory(c -> new TableCell<>() {
             @Override
             protected void updateItem(LocalDateTime it, boolean em) {
                 super.updateItem(it, em);

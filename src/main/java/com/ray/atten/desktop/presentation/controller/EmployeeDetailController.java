@@ -3,6 +3,7 @@ package com.ray.atten.desktop.presentation.controller;
 import com.ray.atten.desktop.dto.FingerprintResult;
 import com.ray.atten.desktop.dto.SyncRequest;
 import com.ray.atten.desktop.model.AttendanceGroup;
+import com.ray.atten.desktop.model.EmployeeSync;
 import com.ray.atten.desktop.model.OaEmployee;
 import com.ray.atten.desktop.presentation.controller.component.ShowZoomImageWindow;
 import com.ray.atten.desktop.service.OaEmployeeService;
@@ -17,13 +18,12 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.controlsfx.control.CheckComboBox;
@@ -35,13 +35,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.SocketTimeoutException;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.*;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Component
@@ -51,13 +48,14 @@ public class EmployeeDetailController {
     private ImageView photoImageView;
     @FXML
     private ImageView fingerprint1ImageView;
-    @FXML
-    private ImageView fingerprint1ImageView1;
 
     @FXML
     private Label pinLabel, nameLabel, deptLabel, officeLocationLabel, entryDateLabel, statusLabel, lblMessage;
     @FXML
     private Button captureButton, uploadButton, enrollButton, reconnectButton, verifyButton, confirmButton, cancelButton, syncButton;
+
+    @FXML
+    private ComboBox<OaEmployee.FingerStatus> fingerStatusComboBox;
 
     @FXML
     private StackPane deviceGroupSelectorContainer;
@@ -67,10 +65,8 @@ public class EmployeeDetailController {
     private List<AttendanceGroup> allAttendanceGroups = new ArrayList<>();
 
     @Autowired
-    private OaEmployeeService oaEmployeeService; // 注入 Service
+    private OaEmployeeService oaEmployeeService;
 
-    private Image currentPhoto;
-    private String currentFingerprint1Base64;
     private OaEmployee employee;
     private volatile boolean isConnecting = false;
     private FingerprintResult capturedResult;
@@ -82,9 +78,14 @@ public class EmployeeDetailController {
     @Autowired
     private LoadingManager loadingManager;
 
+    // 临时存储当前修改的指纹 Base64 (Key 为 FID)
+    private Map<Integer, String> tempFingerprintMap = new HashMap<>();
+    // 临时存储当前修改的照片 Base64
+    private String tempPhotoBase64 = null;
+
     private final Image DEFAULT_AVATAR = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/images/default_avatar.png")));
     private final Image DEFAULT_FINGERPRINT = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/images/default_fingerprint.png")));
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final Image DEFAULT_EXISTS_FINGERPRINT = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/images/fingerprint_exists.png")));
     private Runnable onCloseRequest;
 
     public void setOnCloseRequest(Runnable onCloseRequest) {
@@ -93,51 +94,44 @@ public class EmployeeDetailController {
 
     @FXML
     public void initialize() {
-        // 1. 立即设置默认图，防止 ImageView 渲染异常
         if (photoImageView != null) photoImageView.setImage(DEFAULT_AVATAR);
         if (fingerprint1ImageView != null) fingerprint1ImageView.setImage(DEFAULT_FINGERPRINT);
 
-        // 2. 隐藏重连按钮，设置初始消息
         if (reconnectButton != null) reconnectButton.setVisible(false);
         if (lblMessage != null) lblMessage.setText("正在加载配置...");
 
-        // 3. 必须先初始化容器内的控件，再加载数据
+        initFingerSelector();
         initDeviceGroupSelector();
 
-        // 4. 将网络/数据库请求放在 Platform.runLater 中，确保 UI 已经完全展示
         Platform.runLater(() -> {
             loadAttendanceGroups();
             tryConnectDevice(false);
         });
     }
 
-    /**
-     * 初始化 CheckComboBox 并注入到 StackPane 容器
-     */
+    private void initFingerSelector() {
+        // 监听下拉框，切换手指时更新图片显示
+        fingerStatusComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                updateFingerprintImageView(newVal.getFid());
+            }
+        });
+    }
+
     private void initDeviceGroupSelector() {
         if (deviceGroupSelectorContainer == null) return;
-
         deviceGroupCheckComboBox = new CheckComboBox<>(deviceGroups);
         deviceGroupCheckComboBox.setPrefWidth(180.0);
         deviceGroupCheckComboBox.setMaxWidth(Double.MAX_VALUE);
-
-        // 设置初始标题
         deviceGroupCheckComboBox.setTitle("请选择设备组");
 
-        // 【新增】监听选中项变化，动态更新标题回显
         deviceGroupCheckComboBox.getCheckModel().getCheckedItems().addListener((ListChangeListener<String>) c -> {
             ObservableList<String> selectedItems = deviceGroupCheckComboBox.getCheckModel().getCheckedItems();
             if (selectedItems.isEmpty()) {
                 deviceGroupCheckComboBox.setTitle("请选择设备组");
             } else {
-                // 将选中的组名拼接显示
                 String combined = String.join(", ", selectedItems);
-                // 详情页宽度有限（180.0），如果选多了建议简略显示
-                if (selectedItems.size() > 1) {
-                    deviceGroupCheckComboBox.setTitle("已选 " + selectedItems.size() + " 个组");
-                } else {
-                    deviceGroupCheckComboBox.setTitle(combined);
-                }
+                deviceGroupCheckComboBox.setTitle(selectedItems.size() > 1 ? "已选 " + selectedItems.size() + " 个组" : combined);
             }
         });
 
@@ -145,101 +139,115 @@ public class EmployeeDetailController {
         deviceGroupSelectorContainer.getChildren().add(deviceGroupCheckComboBox);
     }
 
-    /**
-     * 动态读取设备组数据
-     */
     private void loadAttendanceGroups() {
-        Task<List<AttendanceGroup>> task = new Task<List<AttendanceGroup>>() {
+        Task<List<AttendanceGroup>> task = new Task<>() {
             @Override
-            protected List<AttendanceGroup> call() throws Exception {
+            protected List<AttendanceGroup> call() throws IOException {
                 return oaEmployeeService.getAttendanceGroups();
             }
         };
-
         task.setOnSucceeded(e -> {
-            List<AttendanceGroup> results = task.getValue();
-            if (results != null) {
-                this.allAttendanceGroups = results;
-                List<String> names = results.stream()
-                        .map(AttendanceGroup::getGroupName)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
-                Platform.runLater(() -> deviceGroups.setAll(names));
+            this.allAttendanceGroups = task.getValue();
+            if (allAttendanceGroups != null) {
+                List<String> names = allAttendanceGroups.stream().map(AttendanceGroup::getGroupName).collect(Collectors.toList());
+                deviceGroups.setAll(names);
             }
         });
-
-        task.setOnFailed(e -> {
-            Platform.runLater(() -> {
-                if (lblMessage != null) lblMessage.setText("加载设备组失败");
-                e.getSource().getException().printStackTrace();
-            });
-        });
-
         new Thread(task).start();
     }
 
     public void setEmployeeInfo(OaEmployee employee) {
+        // 【核心修复】切换员工时，必须清空上一位员工的残留数据
+        this.tempFingerprintMap.clear();
+        this.tempPhotoBase64 = null;
+        this.capturedResult = null;
+
+        // 清除 UI 状态
+        if (photoImageView != null) photoImageView.setImage(DEFAULT_AVATAR);
+        if (fingerprint1ImageView != null) fingerprint1ImageView.setImage(DEFAULT_FINGERPRINT);
+        if (lblMessage != null) {
+            lblMessage.setText("");
+            lblMessage.setStyle("");
+        }
+
         this.employee = employee;
         if (employee != null) {
-            pinLabel.setText(employee.getPin() != null ? employee.getPin() : "");
-            nameLabel.setText(employee.getName() != null ? employee.getName() : "");
-            deptLabel.setText(employee.getDept() != null ? employee.getDept() : "");
-            officeLocationLabel.setText(employee.getOfficeLocation() != null ? employee.getOfficeLocation() : "");
+            pinLabel.setText(employee.getPin());
+            nameLabel.setText(employee.getName());
+            deptLabel.setText(employee.getDept());
+            officeLocationLabel.setText(employee.getOfficeLocation());
             entryDateLabel.setText(employee.getEntryDate() != null ?
-                    AppConstants.dateTimeFormatter(employee.getEntryDate(), AppConstants.YYYY_MM_DD) :
-                    AppConstants.dateTimeFormatter(LocalDateTime.now(), AppConstants.YYYY_MM_DD));
+                    AppConstants.dateTimeFormatter(employee.getEntryDate(), AppConstants.YYYY_MM_DD) : "");
             statusLabel.setText(employee.getInService() != null && employee.getInService() ? "在职" : "离职");
 
-            // 加载照片
-            if (employee.getPhotoBase64() != null && !employee.getPhotoBase64().isEmpty()) {
-                Image img = ImageConverter.base64ToImage(employee.getPhotoBase64());
-                photoImageView.setImage(img != null ? img : DEFAULT_AVATAR);
-                this.currentPhoto = img;
+            // 加载照片 (注意：这里使用 "photo" 字符串与后端对应)
+            String photoBase64 = employee.getPhotoBase64();
+            if (photoBase64 != null && !photoBase64.isEmpty()) {
+                photoImageView.setImage(ImageConverter.base64ToImage(photoBase64));
             }
 
-            // 加载指纹
-            if (employee.getFingerprint() != null && !employee.getFingerprint().isEmpty()) {
-                Image img = ImageConverter.base64ToImage(employee.getFingerprint());
-                if (img != null) {
-                    fingerprint1ImageView.setImage(img);
-                    this.currentFingerprint1Base64 = employee.getFingerprint();
-                }
+            refreshFingerStatusCombo();
+            // 默认选中第一根手指并触发图片显示
+            fingerStatusComboBox.getSelectionModel().selectFirst();
+            if (fingerStatusComboBox.getSelectionModel().getSelectedItem() != null) {
+                updateFingerprintImageView(fingerStatusComboBox.getSelectionModel().getSelectedItem().getFid());
             }
-
         }
+    }
+
+    private void updateFingerprintImageView(int fid) {
+        // 1. 检查实时缓存（如果是刚录入且未关闭窗口，这里会有 capturedResult）
+        if (capturedResult != null && tempFingerprintMap.containsKey(fid)) {
+            if (capturedResult.getFingerprintImage() != null) {
+                fingerprint1ImageView.setImage(capturedResult.getFingerprintImage());
+                return;
+            }
+        }
+
+        // 2. 检查是否有数据（内存暂存 或 数据库加载）
+        String base64 = tempFingerprintMap.get(fid);
+        if (base64 == null && employee != null) {
+            base64 = employee.getFingerprintBase64(fid);
+        }
+
+        // 3. 渲染逻辑
+        if (base64 != null && !base64.isEmpty()) {
+            // 重要：不要尝试转换 base64 为图片，显示一个“指纹已存在”的图标
+            // 请确保项目中 /images/ 目录下有 fingerprint_exists.png
+            fingerprint1ImageView.setImage(DEFAULT_EXISTS_FINGERPRINT);
+        } else {
+            fingerprint1ImageView.setImage(DEFAULT_FINGERPRINT);
+        }
+    }
+
+    private void refreshFingerStatusCombo() {
+        if (employee == null) return;
+        fingerStatusComboBox.setItems(FXCollections.observableArrayList(employee.getFingerStatuses()));
     }
 
     @FXML
     private void handleConfirm() {
         if (employee == null) return;
 
-        // 1. 组装数据到 SyncRequest DTO
         SyncRequest syncRequest = new SyncRequest();
         syncRequest.setPin(employee.getPin());
         syncRequest.setName(employee.getName());
 
-        // 处理当前最新的照片 (优先使用内存中新拍摄/上传的)
-        if (currentPhoto != null) {
-            syncRequest.setPhotoBase64(ImageConverter.javafxImageToBase64(currentPhoto));
-        } else {
-            syncRequest.setPhotoBase64(employee.getPhotoBase64());
+        // 确保存储到 syncList
+        if (tempPhotoBase64 != null) {
+            updateEmployeeSyncData("photo", null, tempPhotoBase64);
         }
+        tempFingerprintMap.forEach((fid, base64) -> updateEmployeeSyncData("finger", fid, base64));
 
-        // 处理当前最新的指纹
-        if (currentFingerprint1Base64 != null) {
-            syncRequest.setFingerprint(currentFingerprint1Base64);
-        } else {
-            syncRequest.setFingerprint(employee.getFingerprint());
-        }
+        // 提交完整的 syncList
+        syncRequest.setFingerFidList(employee.getSyncList());
 
-        // 2. 开启异步任务保存到数据库
         loadingManager.show("正在保存数据...");
         confirmButton.setDisable(true);
 
-        Task<Void> saveTask = new Task<Void>() {
+        Task<Void> saveTask = new Task<>() {
             @Override
             protected Void call() throws Exception {
-                // 调用 Service 保存到数据库（employee_sync_queue 表）
                 oaEmployeeService.saveSyncData(syncRequest);
                 return null;
             }
@@ -249,16 +257,8 @@ public class EmployeeDetailController {
             loadingManager.hide();
             confirmButton.setDisable(false);
             Platform.runLater(() -> {
-                // 更新内存中的 employee 对象，确保 UI 列表同步
-                employee.setPhotoBase64(syncRequest.getPhotoBase64());
-                employee.setFingerprint(syncRequest.getFingerprint());
-
-                lblMessage.setText("保存并同步队列成功！");
-
-                // 执行关闭逻辑
-                if (onCloseRequest != null) {
-                    onCloseRequest.run();
-                }
+                lblMessage.setText("保存数据成功！");
+                if (onCloseRequest != null) onCloseRequest.run();
                 cleanup();
             });
         });
@@ -266,20 +266,15 @@ public class EmployeeDetailController {
         saveTask.setOnFailed(e -> {
             loadingManager.hide();
             confirmButton.setDisable(false);
-            Throwable ex = saveTask.getException();
-            Platform.runLater(() -> {
-                CustomAlertDialog.showError("保存失败", "无法写入数据库");
-                lblMessage.setText("保存失败，请重试");
-            });
+            CustomAlertDialog.showError("保存失败", "无法写入数据库");
         });
 
         new Thread(saveTask).start();
     }
 
-    // --- 拍照、上传、指纹及其他逻辑 (保持不变) ---
     @FXML
     private void handleCapturePhoto() {
-        loadingManager.show("正在打开相机.......");
+        loadingManager.show("正在打开相机...");
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/CameraPreviewView.fxml"));
             loader.setControllerFactory(springContext::getBean);
@@ -292,16 +287,12 @@ public class EmployeeDetailController {
             cameraStage.showAndWait();
 
             if (cameraController.isConfirmed()) {
-                String photoBase64 = cameraController.getPhotoBase64();
-                if (photoBase64 != null) {
-                    Image img = ImageConverter.base64ToImage(photoBase64);
-                    photoImageView.setImage(img);
-                    this.currentPhoto = img;
-                    lblMessage.setText("照片录入成功");
-                }
+                this.tempPhotoBase64 = cameraController.getPhotoBase64();
+                photoImageView.setImage(ImageConverter.base64ToImage(tempPhotoBase64));
+                lblMessage.setText("照片录入成功");
             }
         } catch (IOException e) {
-            lblMessage.setText("摄像头启动失败: " + e.getMessage());
+            lblMessage.setText("摄像头启动失败");
         }
     }
 
@@ -315,7 +306,7 @@ public class EmployeeDetailController {
             try {
                 Image image = new Image(new FileInputStream(file));
                 photoImageView.setImage(image);
-                this.currentPhoto = image;
+                this.tempPhotoBase64 = ImageConverter.javafxImageToBase64(image);
                 lblMessage.setText("照片上传成功");
             } catch (FileNotFoundException e) {
                 lblMessage.setText("文件读取错误");
@@ -324,30 +315,58 @@ public class EmployeeDetailController {
     }
 
     @FXML
-    private void handleReconnectDevice() {
-        lblMessage.setText("正在尝试重新连接指纹设备...");
-        if (!isConnecting) tryConnectDevice(true);
-    }
-
-    @FXML
     private void handleFingerEnroll() {
+        OaEmployee.FingerStatus selectedStatus = fingerStatusComboBox.getSelectionModel().getSelectedItem();
+        if (selectedStatus == null) {
+            CustomAlertDialog.showWarning("提示", "请先选择要录入的手指。");
+            return;
+        }
+
         enrollButton.setDisable(true);
-        verifyButton.setDisable(true);
-        lblMessage.setText("请将手指放在指纹仪器上...");
-        lblMessage.setStyle("-fx-text-fill: orange;");
+        lblMessage.setText("正在录入指纹 ");
 
         new Thread(() -> {
+            // 1. 调用工具类采集：此时 FingerprintResult 内部会填充 Image 对象和模板字节数组
             FingerprintResult result = FingerprintUtil.captureAndExtract(500);
+
             Platform.runLater(() -> {
-                if (result != null) {
-                    this.capturedResult = result;
-                    this.currentFingerprint1Base64 = result.getTemplateBase64();
-                    fingerprint1ImageView.setImage(result.getFingerprintImage());
-                    lblMessage.setText("指紋采集成功！");
+                if (result != null && result.getTemplateBase64() != null) {
+                    capturedResult = result;
+                    int fid = selectedStatus.getFid();
+
+                    // 2. 存储模板 Base64（用于比对和保存到数据库）
+                    tempFingerprintMap.put(fid, result.getTemplateBase64());
+
+                    // 3. 【核心修复】更新 UI 图片展示
+                    if (result.getFingerprintImage() != null) {
+                        // 直接使用对象展示，不要走 ImageConverter 转换特征码
+                        fingerprint1ImageView.setImage(result.getFingerprintImage());
+                    } else {
+                        // 如果 SDK 没返回图像，显示一个“录入成功”的占位图标
+                        // 绝不能在这里传 result.getTemplateBase64()
+                        fingerprint1ImageView.setImage(DEFAULT_FINGERPRINT);
+                        System.err.println("警告：指纹仪未返回图像对象，仅获取到特征模板。");
+                    }
+
+                    // 4. 更新内存中的 syncList 供后续保存使用
+                    updateEmployeeSyncData("finger", fid, result.getTemplateBase64());
+
+                    // 5. 刷新界面元素
+                    refreshFingerStatusCombo();
+
+                    // 重新选中当前手指
+                    for (OaEmployee.FingerStatus fs : fingerStatusComboBox.getItems()) {
+                        if (fs.getFid() == fid) {
+                            fingerStatusComboBox.getSelectionModel().select(fs);
+                            break;
+                        }
+                    }
+
+                    lblMessage.setText("指纹 " + (fid + 1) + " 采集成功！");
                     lblMessage.setStyle("-fx-text-fill: green;");
                     verifyButton.setDisable(false);
                 } else {
-                    lblMessage.setText("采集失败，请重试。");
+                    lblMessage.setText("采集失败：请确保手指按压在传感器中心。");
                     lblMessage.setStyle("-fx-text-fill: red;");
                 }
                 enrollButton.setDisable(false);
@@ -355,112 +374,108 @@ public class EmployeeDetailController {
         }).start();
     }
 
-    @FXML
-    private void handleFingerVerify() {
-        if (capturedResult == null) {
-            CustomAlertDialog.showWarning("比对失败", "请先采集指纹。");
-            return;
-        }
-        String storedBase64 = employee.getFingerprint();
-        if (storedBase64 == null || storedBase64.isEmpty()) {
-            CustomAlertDialog.showWarning("比对失败", "数据库中无指纹记录。");
-            return;
-        }
-        byte[] storedTemplate = FingerprintUtil.base64ToBlob(storedBase64);
-        boolean matched = FingerprintUtil.verify(capturedResult.getTemplate(), storedTemplate, 0);
-        if (matched) {
-            lblMessage.setText("比对成功：指纹匹配。");
-            lblMessage.setStyle("-fx-text-fill: green;");
+    private void updateEmployeeSyncData(String type, Integer fid, String base64) {
+        if (employee == null || employee.getSyncList() == null) return;
+
+        // 查找是否存在相同类型且相同 FID 的记录
+        Optional<EmployeeSync> existing = employee.getSyncList().stream()
+                .filter(s -> type.equals(s.getType()) && Objects.equals(fid, s.getFid()))
+                .findFirst();
+
+        if (existing.isPresent()) {
+            existing.get().setBase64Data(base64);
         } else {
-            lblMessage.setText("比对失败：指纹不匹配！");
-            lblMessage.setStyle("-fx-text-fill: red;");
+            EmployeeSync newDto = new EmployeeSync();
+            newDto.setFid(fid);
+            newDto.setBase64Data(base64);
+            newDto.setType(type);
+            employee.getSyncList().add(newDto);
         }
     }
 
-    /**
-     * 同步按钮逻辑：必须勾选设备组
-     */
+    @FXML
+    private void handleFingerVerify() {
+        OaEmployee.FingerStatus selectedStatus = fingerStatusComboBox.getSelectionModel().getSelectedItem();
+        if (capturedResult == null || selectedStatus == null) {
+            CustomAlertDialog.showWarning("比对失败", "请先采集指纹。");
+            return;
+        }
+
+        String storedBase64 = tempFingerprintMap.getOrDefault(selectedStatus.getFid(),
+                employee.getFingerprintBase64(selectedStatus.getFid()));
+
+        if (storedBase64 == null || storedBase64.isEmpty()) {
+            CustomAlertDialog.showWarning("比对失败", "该手指无录入记录。");
+            return;
+        }
+
+        byte[] storedTemplate = FingerprintUtil.base64ToBlob(storedBase64);
+        boolean matched = FingerprintUtil.verify(capturedResult.getTemplate(), storedTemplate, 0);
+        lblMessage.setText(matched ? "比对成功：指纹匹配。" : "比对失败：指纹不匹配！");
+        lblMessage.setStyle(matched ? "-fx-text-fill: green;" : "-fx-text-fill: red;");
+    }
+
     @FXML
     private void handleSynchronize() {
-        // 1. 获取选中的组名
-        ObservableList<String> selectedGroupNames = deviceGroupCheckComboBox.getCheckModel().getCheckedItems();
-
-        if (selectedGroupNames.isEmpty()) {
-            CustomAlertDialog.showWarning("操作提示", "请先勾选至少一个设备组进行同步。");
+        ObservableList<String> selectedGroups = deviceGroupCheckComboBox.getCheckModel().getCheckedItems();
+        if (selectedGroups.isEmpty()) {
+            CustomAlertDialog.showWarning("提示", "请选择设备组。");
             return;
         }
 
-        // 2. 提取选中组的所有设备 SN (去重合并)
         String combinedSns = allAttendanceGroups.stream()
-                .filter(group -> selectedGroupNames.contains(group.getGroupName()))
+                .filter(g -> selectedGroups.contains(g.getGroupName()))
                 .map(AttendanceGroup::getDeviceSnsString)
-                .filter(sns -> sns != null && !sns.isEmpty())
+                .filter(Objects::nonNull)
                 .collect(Collectors.joining(","));
 
-        if (combinedSns.isEmpty()) {
-            CustomAlertDialog.showWarning("同步失败", "选中的设备组内没有绑定任何设备。");
-            return;
-        }
-
-        // 3. 为当前这一个员工构建同步请求 (由于是详情页，通常只同步当前 employee)
-        if (employee == null) return;
+        if (combinedSns.isEmpty()) return;
 
         SyncRequest request = new SyncRequest();
         request.setPin(employee.getPin());
         request.setName(employee.getName());
-        // 使用当前最新的指纹和照片数据（如果有的话）
-        request.setFingerprint(currentFingerprint1Base64 != null ? currentFingerprint1Base64 : employee.getFingerprint());
-        request.setPhotoBase64(currentPhoto != null ? ImageConverter.javafxImageToBase64(currentPhoto) : employee.getPhotoBase64());
         request.setDeviceSn(combinedSns);
 
-        request.setFingerSize(employee.getFingerSize());
-        request.setPhotoSize(employee.getPhotoSize());
+        // 实时更新当前所有指纹和照片进入同步包
+        if (tempPhotoBase64 != null) updateEmployeeSyncData("photo", null, tempPhotoBase64);
+        tempFingerprintMap.forEach((fid, base64) -> updateEmployeeSyncData("finger", fid, base64));
+        request.setFingerFidList(employee.getSyncList());
 
-        List<SyncRequest> requests = Collections.singletonList(request);
-
-        // 4. 执行同步
-        performSynchronization(requests);
+        performSynchronization(Collections.singletonList(request));
     }
 
     private void performSynchronization(List<SyncRequest> requests) {
-        loadingManager.show("正在执行同步......");
-        syncButton.setDisable(true); // 防止重复点击
-
-        Task<Void> syncTask = new Task<Void>() {
+        loadingManager.show("正在同步...");
+        syncButton.setDisable(true);
+        Task<Void> task = new Task<>() {
             @Override
             protected Void call() throws Exception {
-                // 调用服务层执行同步
                 oaEmployeeService.syncEmployeesToGroup(requests);
                 return null;
             }
         };
-
-        syncTask.setOnSucceeded(e -> {
+        task.setOnSucceeded(e -> {
             loadingManager.hide();
             syncButton.setDisable(false);
+            CustomAlertDialog.showInfo("成功", "同步请求已发送。");
+
+            // --- 核心修复：同步成功后也触发刷新 ---
             Platform.runLater(() -> {
-                CustomAlertDialog.showInfo("同步成功", "已成功发送员工 [" + employee.getName() + "] 的同步请求。");
-                // 同步成功后可以选择是否关闭抽屉
                 if (onCloseRequest != null) {
                     onCloseRequest.run();
                 }
             });
         });
 
-        syncTask.setOnFailed(e -> {
+        task.setOnFailed(e -> {
+            loadingManager.hide();
             syncButton.setDisable(false);
-            Throwable exception = syncTask.getException();
-            if (exception instanceof SocketTimeoutException || (exception.getMessage() != null && exception.getMessage().contains("timeout"))) {
-                loadingManager.showTimeout(() -> performSynchronization(requests));
-            } else {
-                loadingManager.hide();
-                CustomAlertDialog.showError("同步失败", "错误");
-            }
+            CustomAlertDialog.showError("失败", "同步发生错误");
         });
-
-        new Thread(syncTask).start();
+        new Thread(task).start();
     }
 
+    // --- 设备连接与心跳逻辑 (保持原样) ---
     private void tryConnectDevice(boolean isReconnect) {
         this.isConnecting = true;
         setUiConnectingState(isReconnect);
@@ -560,6 +575,12 @@ public class EmployeeDetailController {
     private void cleanup() {
         stopHeartbeat();
         FingerprintUtil.destroy();
+
+        // 显式清空，防止单例 Bean 导致的内存泄漏和数据污染
+        tempFingerprintMap.clear();
+        tempPhotoBase64 = null;
+        capturedResult = null;
+        employee = null;
     }
 
     @FXML
@@ -569,13 +590,24 @@ public class EmployeeDetailController {
     }
 
     @FXML
-    private void handleImageClickToZoom(MouseEvent event) {
-        if (this.currentPhoto != null) ShowZoomImageWindow.showZoomWindow(this.currentPhoto);
+    private void handleImageClickToZoom() {
+        if (tempPhotoBase64 != null) {
+            ShowZoomImageWindow.showZoomWindow(ImageConverter.base64ToImage(tempPhotoBase64));
+        } else if (employee.getPhotoBase64() != null) {
+            ShowZoomImageWindow.showZoomWindow(ImageConverter.base64ToImage(employee.getPhotoBase64()));
+        }
     }
 
     @FXML
-    private void handleFingerprintClickToZoom(MouseEvent event) {
-        if (fingerprint1ImageView.getImage() != DEFAULT_FINGERPRINT)
-            ShowZoomImageWindow.showZoomWindow(fingerprint1ImageView.getImage());
+    private void handleFingerprintClickToZoom() {
+        Image img = fingerprint1ImageView.getImage();
+        if (img != DEFAULT_FINGERPRINT) ShowZoomImageWindow.showZoomWindow(img);
     }
+
+    @FXML
+    private void handleReconnectDevice() {
+        lblMessage.setText("正在尝试重新连接指纹设备...");
+        if (!isConnecting) tryConnectDevice(true);
+    }
+
 }

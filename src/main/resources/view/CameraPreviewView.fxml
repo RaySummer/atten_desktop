@@ -31,13 +31,13 @@
                 <Button fx:id="btnCancel" text="取消" onAction="#handleCancel" prefWidth="130.0" prefHeight="38.0"
                         style="-fx-background-color: #1a73e8; -fx-text-fill: white;  -fx-cursor: hand;"/>
                 <Button fx:id="btnCapture" text="📷 执行拍照" onAction="#handleCapture" prefWidth="130.0" prefHeight="38.0"
-                        style="-fx-background-color: #ffffff; -fx-text-fill: #333333; -fx-font-weight: bold;  -fx-cursor: hand;"/>
+                        style="-fx-background-color: #3aff6a; -fx-text-fill: #333333; -fx-font-weight: bold;  -fx-cursor: hand;"/>
                 <Button fx:id="btnRetake" text="重拍" onAction="#handleRetake" visible="false" managed="false"
                         prefWidth="130.0" prefHeight="38.0"
                         style="-fx-background-color: #444444; -fx-text-fill: white;  -fx-cursor: hand;"/>
                 <Button fx:id="btnConfirm" text="确定并使用" onAction="#handleConfirm" visible="false" managed="false"
                         prefWidth="130.0" prefHeight="38.0"
-                        style="-fx-background-color: #ffffff; -fx-text-fill: #333333; -fx-font-weight: bold;  -fx-cursor: hand;"/>
+                        style="-fx-background-color: #3aff6a; -fx-text-fill: #333333; -fx-font-weight: bold;  -fx-cursor: hand;"/>
             </children>
         </HBox>
     </children>
