@@ -661,7 +661,7 @@
 /* 针对 TableView 里的状态显示（如果有的话） */
 .custom-table-view {
     -fx-background-color: transparent;
-    -fx-control-inner-background: #2b2b2b; /* 单元格背景 */
+    -fx-control-inner-background: #ffffff; /* 单元格背景 */
 }
 
 /* 确保表格内的 Label 不会撑开行高 */

@@ -74,7 +74,7 @@ public class EmployeeListController {
     // --- TableView 控件 ---
     private TableView<OaEmployee> employeeTable;
     private TableColumn<OaEmployee, Boolean> selectColumn; // 替换原 rowNumberColumn
-    private TableColumn<OaEmployee, String> pinColumn, nameColumn, companyColumn, deptColumn, officeLocation;
+    private TableColumn<OaEmployee, String> pinColumn, nameColumn, companyColumn, deptColumn, post;
     private TableColumn<OaEmployee, String> fingerprintColumn, photoColumn;
     private TableColumn<OaEmployee, Boolean> inServiceColumn;
     private TableColumn<OaEmployee, LocalDateTime> entryDateColumn;
@@ -102,7 +102,7 @@ public class EmployeeListController {
         setupCenterAlignmentForTextColumn(nameColumn);
         setupCenterAlignmentForTextColumn(companyColumn);
         setupCenterAlignmentForTextColumn(deptColumn);
-        setupCenterAlignmentForTextColumn(officeLocation);
+        setupCenterAlignmentForTextColumn(post);
 
         // 允许表格本身多选（虽然我们用了 CheckBox 列）
         employeeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
@@ -140,7 +140,7 @@ public class EmployeeListController {
         nameColumn = new TableColumn<>("姓名");
         companyColumn = new TableColumn<>("公司");
         deptColumn = new TableColumn<>("部门");
-        officeLocation = new TableColumn<>("办公地点");
+        post = new TableColumn<>("职位");
         fingerprintColumn = new TableColumn<>("指纹");
         photoColumn = new TableColumn<>("照片");
         inServiceColumn = new TableColumn<>("是否在职");
@@ -161,7 +161,7 @@ public class EmployeeListController {
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         companyColumn.setCellValueFactory(new PropertyValueFactory<>("company"));
         deptColumn.setCellValueFactory(new PropertyValueFactory<>("dept"));
-        officeLocation.setCellValueFactory(new PropertyValueFactory<>("officeLocation"));
+        post.setCellValueFactory(new PropertyValueFactory<>("post"));
         fingerprintColumn.setCellValueFactory(data -> {
             OaEmployee emp = data.getValue();
             // 检查 syncList 中是否包含 type 为 "finger" 且数据不为空的记录
@@ -186,8 +186,8 @@ public class EmployeeListController {
         setupBinaryStatusColumnFormatting(fingerprintColumn);
         setupBinaryStatusColumnFormatting(photoColumn);
 
-        employeeTable.getColumns().addAll(selectColumn, pinColumn, nameColumn, companyColumn, deptColumn,
-                fingerprintColumn, photoColumn, officeLocation, inServiceColumn, entryDateColumn, actionColumn);
+        employeeTable.getColumns().addAll(selectColumn, pinColumn, nameColumn, companyColumn, deptColumn, post,
+                fingerprintColumn, photoColumn, inServiceColumn, entryDateColumn, actionColumn);
     }
 
     private void handleSelectAllAction() {
