@@ -1,41 +1,41 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: 1. è‡ªåŠ¨è¯·æ±‚ç®¡ç†å‘˜æƒé™ (é™é»˜è·³è½¬)
+:: 1. ×Ô¶¯ÇëÇó¹ÜÀíÔ±È¨ÏÞ (¾²Ä¬Ìø×ª)
 >nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
 if '%errorlevel%' NEQ '0' (
     echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
-    :: è¿™é‡Œçš„ 0 è¡¨ç¤ºéšè—æ–°å¼€å¯çš„ç®¡ç†å‘˜çª—å£
+    :: ÕâÀïµÄ 0 ±íÊ¾Òþ²ØÐÂ¿ªÆôµÄ¹ÜÀíÔ±´°¿Ú
     echo UAC.ShellExecute "cmd.exe", "/c %~s0 ""%~1"" ""%~2"" ""%~3""", "", "runas", 0 >> "%temp%\getadmin.vbs"
     "%temp%\getadmin.vbs"
     del /f /q "%temp%\getadmin.vbs" >nul 2>&1
     exit /b
 )
 
-:: --- ç®¡ç†å‘˜é™é»˜åŒºåŸŸ ---
-:: åˆ‡æ¢ç¼–ç ä»¥æ”¯æŒä¸­æ–‡è·¯å¾„å¤„ç†
+:: --- ¹ÜÀíÔ±¾²Ä¬ÇøÓò ---
+:: ÇÐ»»±àÂëÒÔÖ§³ÖÖÐÎÄÂ·¾¶´¦Àí
 chcp 936 >nul
 
 set "SRC=%~1"
 set "DEST_DIR=%~2"
 set "DEST_NAME=%~3"
 
-:: 2. å¼ºåˆ¶ç»“æŸè¿›ç¨‹
+:: 2. Ç¿ÖÆ½áÊø½ø³Ì
 taskkill /f /im javaw.exe /t >nul 2>&1
 taskkill /f /im AttenDesktop.exe /t >nul 2>&1
-:: ç•™å‡º 2 ç§’ç­‰å¾…å¥æŸ„é‡Šæ”¾
+:: Áô³ö 2 ÃëµÈ´ý¾ä±úÊÍ·Å
 timeout /t 2 /nobreak >nul
 
-:: 3. æ‰§è¡Œç‰©ç†æ›¿æ¢
+:: 3. Ö´ÐÐÎïÀíÌæ»»
 if exist "!SRC!" (
     copy /y "!SRC!" "!DEST_DIR!\!DEST_NAME!" >nul 2>&1
     if !errorlevel! equ 0 (
-        :: æ›¿æ¢æˆåŠŸåŽæ¸…ç†ä¸´æ—¶åŒ…
+        :: Ìæ»»³É¹¦ºóÇåÀíÁÙÊ±°ü
         del /f /q "!SRC!" >nul 2>&1
     )
 )
 
-:: 4. è‡ªåŠ¨é‡å¯ç¨‹åº
+:: 4. ×Ô¶¯ÖØÆô³ÌÐò
 if exist "!DEST_DIR!\!DEST_NAME!" (
     cd /d "!DEST_DIR!"
     cd ..
