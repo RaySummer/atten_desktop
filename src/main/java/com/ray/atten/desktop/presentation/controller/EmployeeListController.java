@@ -146,9 +146,9 @@ public class EmployeeListController {
         fingerprintColumn.setMaxWidth(80);
         photoColumn.setMinWidth(65);
         photoColumn.setMaxWidth(80);
-        entryDateColumn.setMinWidth(100);
+        entryDateColumn.setMinWidth(70);
         companyColumn.setMinWidth(120);
-        actionColumn.setMinWidth(140);
+        actionColumn.setMinWidth(100);
 
         // 绑定字段
         pinColumn.setCellValueFactory(new PropertyValueFactory<>("pin"));

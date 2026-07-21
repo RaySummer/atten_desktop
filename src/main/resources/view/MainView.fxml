@@ -7,14 +7,12 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
 
-<!-- 【核心修改】：移除固定的 800x1500 寬高，改為設定最小寬高防變形，寬高將交由 Stage 控制並百分比自適應 -->
-<StackPane fx:id="rootStackPane" minWidth="1000.0" minHeight="650.0" xmlns="http://javafx.com/javafx/8"
+<StackPane fx:id="rootStackPane" minWidth="1200.0" minHeight="650.0" xmlns="http://javafx.com/javafx/8"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.ray.atten.desktop.presentation.controller.MainController">
 
     <BorderPane fx:id="mainContainer">
         <left>
-            <!-- 側邊欄固定寬度，右側 center 自動撐開佔滿 100% 剩餘空間 -->
             <VBox prefWidth="220.0" spacing="5.0" styleClass="sidebar">
                 <children>
                     <VBox alignment="CENTER" spacing="10.0">
@@ -92,7 +90,6 @@
         </left>
 
         <center>
-            <!-- ContentArea 移除了宽高限制，會隨視窗縮放自動按 100% 比例自適應延伸 -->
             <StackPane fx:id="contentArea" styleClass="content-area">
                 <children>
                     <Label text="请从左侧选择功能模块" styleClass="placeholder-label">
