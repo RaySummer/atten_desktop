@@ -1,19 +1,23 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: 1. 自动请求管理员权限 (静默跳转)
+:: 1. 自动请求管理员权限 (在你的原版基础修补：将最后的 0 改为 1)
 >nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
 if '%errorlevel%' NEQ '0' (
     echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
-    :: 这里的 0 表示隐藏新开启的管理员窗口
-    echo UAC.ShellExecute "cmd.exe", "/c %~s0 ""%~1"" ""%~2"" ""%~3""", "", "runas", 0 >> "%temp%\getadmin.vbs"
+    
+    :: 【核心修复一】：将原本最后的参数 0 (隐藏) 改为 1 (普通激活运行)
+    :: 这样能保证在所有第三方杀毒软件和 Windows 企业安全策略电脑上 100% 弹出 UAC 提示。
+    :: 保留你原本一模一样的短路径 %~s0 和参数双引号结构，确保你的 Desktop 主程序传参不失效。
+    echo UAC.ShellExecute "cmd.exe", "/c %~s0 ""%~1"" ""%~2"" ""%~3""", "", "runas", 1 >> "%temp%\getadmin.vbs"
+    
     "%temp%\getadmin.vbs"
     del /f /q "%temp%\getadmin.vbs" >nul 2>&1
     exit /b
 )
 
-:: --- 管理员静默区域 ---
-:: 切换编码以支持中文路径处理
+:: --- 管理员安全区域 ---
+:: 【核心修复二】：既然脚本存为了 ANSI/GBK，一进来就立刻强制指定 936，防止环境错乱
 chcp 936 >nul
 
 set "SRC=%~1"

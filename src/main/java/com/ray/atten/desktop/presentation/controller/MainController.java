@@ -8,6 +8,7 @@ import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Cursor;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -67,12 +68,17 @@ public class MainController {
     private double xOffset = 0;
     private double yOffset = 0;
 
+    // --- 【新增】四边及四角拖拽缩放控制变量 ---
+    private double mouseScreenX = 0;
+    private double mouseScreenY = 0;
+    private boolean isResizing = false;
+    private int resizeMode = 0; // 0:无, 1:左, 2:右, 3:上, 4:下, 5:左上, 6:右上, 7:左下, 8:右下
+    private static final double RESIZE_MARGIN = 8.0; // 边缘8像素响应范围
+
     @FXML
     public void initialize() {
         // 设置姓名
         lblAdminName.setText(SessionContext.getUsername());
-
-        //todo: 增加注销按钮，修改登录界面的样式
 
         // 核心：根据登录时保存的角色决定是否显示管理菜单
         if (SessionContext.IsSuperAdmin()) {
@@ -82,8 +88,9 @@ public class MainController {
 
         // 将根容器交给管理器，管理器会加载 LoadingView 并放置在最上层
         loadingManager.init(rootStackPane);
-        // 1. 实现拖拽
-        enableWindowDrag();
+
+        // 1. 实现无边框窗口的拖拽移动与四边缩放
+        enableWindowDragAndResize();
 
         // 2. 处理主题应用和默认选中状态
         Platform.runLater(() -> {
@@ -98,12 +105,8 @@ public class MainController {
         String savedTheme = ConfigRepo.getTheme();
         String cssPath = savedTheme.equals("dark") ? "/css/dark.css" : "/css/light.css";
         Scene scene = mainContainer.getScene();
-//        if (scene != null) {
-//            scene.getStylesheets().clear();
-//            scene.getStylesheets().add(getClass().getResource(cssPath).toExternalForm());
-//        }
-        // 建议先添加新样式，再移除旧样式，防止样式中断导致的计算错误
-        if (!scene.getStylesheets().contains(cssPath)) {
+
+        if (scene != null && !scene.getStylesheets().contains(cssPath)) {
             scene.getStylesheets().add(cssPath);
             // 移除除了新加的这个以外的所有样式表
             scene.getStylesheets().removeIf(s -> !s.equals(cssPath));
@@ -121,17 +124,139 @@ public class MainController {
         }
     }
 
-    private void enableWindowDrag() {
-        mainContainer.setOnMousePressed(event -> {
-            xOffset = event.getSceneX();
-            yOffset = event.getSceneY();
+    /**
+     * 【重构与升级】：同时支持“中间区域平移拖拽”与“四边/四角鼠标拉伸缩放”
+     */
+    private void enableWindowDragAndResize() {
+        // A. 悬停在边缘时改变鼠标指针图标 (↔ ↕ ↖ ↗ 等)
+        rootStackPane.setOnMouseMoved(e -> {
+            Stage stage = (Stage) rootStackPane.getScene().getWindow();
+            if (stage == null || stage.isMaximized()) {
+                rootStackPane.setCursor(Cursor.DEFAULT);
+                return;
+            }
+
+            double x = e.getX();
+            double y = e.getY();
+            double w = rootStackPane.getWidth();
+            double h = rootStackPane.getHeight();
+
+            boolean left = x < RESIZE_MARGIN;
+            boolean right = x > w - RESIZE_MARGIN;
+            boolean top = y < RESIZE_MARGIN;
+            boolean bottom = y > h - RESIZE_MARGIN;
+
+            if (left && top) rootStackPane.setCursor(Cursor.NW_RESIZE);
+            else if (right && top) rootStackPane.setCursor(Cursor.NE_RESIZE);
+            else if (left && bottom) rootStackPane.setCursor(Cursor.SW_RESIZE);
+            else if (right && bottom) rootStackPane.setCursor(Cursor.SE_RESIZE);
+            else if (left) rootStackPane.setCursor(Cursor.H_RESIZE);
+            else if (right) rootStackPane.setCursor(Cursor.H_RESIZE);
+            else if (top) rootStackPane.setCursor(Cursor.V_RESIZE);
+            else if (bottom) rootStackPane.setCursor(Cursor.V_RESIZE);
+            else rootStackPane.setCursor(Cursor.DEFAULT);
         });
-        mainContainer.setOnMouseDragged(event -> {
-            Stage stage = (Stage) mainContainer.getScene().getWindow();
-            if (stage != null) {
+
+        // B. 鼠标按下：判定是拉伸操作还是整体平移窗口操作
+        rootStackPane.setOnMousePressed(event -> {
+            Stage stage = (Stage) rootStackPane.getScene().getWindow();
+            if (stage == null) return;
+
+            double x = event.getX();
+            double y = event.getY();
+            double w = rootStackPane.getWidth();
+            double h = rootStackPane.getHeight();
+
+            boolean left = x < RESIZE_MARGIN;
+            boolean right = x > w - RESIZE_MARGIN;
+            boolean top = y < RESIZE_MARGIN;
+            boolean bottom = y > h - RESIZE_MARGIN;
+
+            isResizing = left || right || top || bottom;
+
+            if (left && top) resizeMode = 5;
+            else if (right && top) resizeMode = 6;
+            else if (left && bottom) resizeMode = 7;
+            else if (right && bottom) resizeMode = 8;
+            else if (left) resizeMode = 1;
+            else if (right) resizeMode = 2;
+            else if (top) resizeMode = 3;
+            else if (bottom) resizeMode = 4;
+            else resizeMode = 0;
+
+            if (isResizing) {
+                mouseScreenX = event.getScreenX();
+                mouseScreenY = event.getScreenY();
+            } else {
+                // 如果没有点在边缘，保留你原本的整体拖拽偏移记录
+                xOffset = event.getSceneX();
+                yOffset = event.getSceneY();
+            }
+        });
+
+        // C. 鼠标拖动：执行缩放或平移
+        rootStackPane.setOnMouseDragged(event -> {
+            Stage stage = (Stage) rootStackPane.getScene().getWindow();
+            if (stage == null || stage.isMaximized()) return;
+
+            if (isResizing && resizeMode != 0) {
+                // --- 执行四边与四角缩放逻辑 ---
+                double deltaX = event.getScreenX() - mouseScreenX;
+                double deltaY = event.getScreenY() - mouseScreenY;
+
+                double oldX = stage.getX();
+                double oldY = stage.getY();
+                double oldW = stage.getWidth();
+                double oldH = stage.getHeight();
+
+                // 最小防碰撞保护，基于FXML中的minWidth/minHeight
+                double minW = rootStackPane.getMinWidth() > 0 ? rootStackPane.getMinWidth() : 900.0;
+                double minH = rootStackPane.getMinHeight() > 0 ? rootStackPane.getMinHeight() : 600.0;
+
+                switch (resizeMode) {
+                    case 1: // 左
+                        if (oldW - deltaX >= minW) { stage.setX(oldX + deltaX); stage.setWidth(oldW - deltaX); }
+                        break;
+                    case 2: // 右
+                        if (oldW + deltaX >= minW) stage.setWidth(oldW + deltaX);
+                        break;
+                    case 3: // 上
+                        if (oldH - deltaY >= minH) { stage.setY(oldY + deltaY); stage.setHeight(oldH - deltaY); }
+                        break;
+                    case 4: // 下
+                        if (oldH + deltaY >= minH) stage.setHeight(oldH + deltaY);
+                        break;
+                    case 5: // 左上
+                        if (oldW - deltaX >= minW) { stage.setX(oldX + deltaX); stage.setWidth(oldW - deltaX); }
+                        if (oldH - deltaY >= minH) { stage.setY(oldY + deltaY); stage.setHeight(oldH - deltaY); }
+                        break;
+                    case 6: // 右上
+                        if (oldW + deltaX >= minW) stage.setWidth(oldW + deltaX);
+                        if (oldH - deltaY >= minH) { stage.setY(oldY + deltaY); stage.setHeight(oldH - deltaY); }
+                        break;
+                    case 7: // 左下
+                        if (oldW - deltaX >= minW) { stage.setX(oldX + deltaX); stage.setWidth(oldW - deltaX); }
+                        if (oldH + deltaY >= minH) stage.setHeight(oldH + deltaY);
+                        break;
+                    case 8: // 右下
+                        if (oldW + deltaX >= minW) stage.setWidth(oldW + deltaX);
+                        if (oldH + deltaY >= minH) stage.setHeight(oldH + deltaY);
+                        break;
+                }
+
+                mouseScreenX = event.getScreenX();
+                mouseScreenY = event.getScreenY();
+            } else {
+                // --- 执行原有的窗口整体拖拽移动 ---
                 stage.setX(event.getScreenX() - xOffset);
                 stage.setY(event.getScreenY() - yOffset);
             }
+        });
+
+        // D. 鼠标松开：重置状态
+        rootStackPane.setOnMouseReleased(e -> {
+            isResizing = false;
+            resizeMode = 0;
         });
     }
 
@@ -208,7 +333,6 @@ public class MainController {
         });
 
         task.setOnFailed(event -> {
-            // 可以记录日志或弹窗提示网络异常
             task.getException().printStackTrace();
         });
 
@@ -219,14 +343,10 @@ public class MainController {
      * 弹出更新对话框
      */
     private void showCustomUpdateDialog(String version, String log, String relativeUrl) {
-        // 构造显示的消息内容
         String message = String.format("发现新版本 v%s\n\n更新日志：\n%s\n\n是否立即下载更新？", version, log);
 
-        // 使用你封装的自定义弹窗类
-        // 标题可以根据需要传入，或者传 null 使用默认
         boolean confirmed = CustomAlertDialog.showConfirmation("系统更新", message);
 
-        // 用户点击了“确认”按钮
         if (confirmed) {
             startDownloadTask(version, relativeUrl);
         }
@@ -234,14 +354,12 @@ public class MainController {
 
     private void startDownloadTask(String version, String relativeUrl) {
         try {
-            // 1. 加载弹窗
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/component/DownloadProgressView.fxml"));
             loader.setControllerFactory(springContext::getBean);
             Parent root = loader.load();
             DownloadProgressController progressController = loader.getController();
 
             Stage progressStage = new Stage();
-            // --- 核心修复：设置父窗口并计算位置 ---
             Window owner = mainContainer.getScene().getWindow();
             if (owner != null) {
                 progressStage.initOwner(owner);
@@ -253,37 +371,30 @@ public class MainController {
             progressStage.setScene(scene);
             progressStage.show();
 
-            // 2. 获取 Task
             Task<File> downloadTask = versionService.createDownloadTask(relativeUrl);
 
-            // 3. 核心修复：双向绑定 (确保进度条会动)
-            // 注意：必须在 UI 线程绑定
             progressController.getProgressBar().progressProperty().bind(downloadTask.progressProperty());
             progressController.getStatusLabel().textProperty().bind(downloadTask.messageProperty());
 
-            // 4. 下载成功监听
             downloadTask.setOnSucceeded(e -> {
                 Platform.runLater(() -> {
-                    progressStage.close(); // 确保关闭
-                    versionService.executeUpdaterScript(version); // 启动脚本
+                    progressStage.close();
+                    versionService.executeUpdaterScript(version);
                 });
             });
 
-            // 5. 下载失败监听
             downloadTask.setOnFailed(e -> {
                 Platform.runLater(() -> {
-                    progressStage.close(); // 确保关闭
+                    progressStage.close();
                     Throwable ex = downloadTask.getException();
                     CustomAlertDialog.showError("更新失败", "下载包损坏或网络超时");
                 });
             });
 
-            // 6. 下载取消监听（可选）
             downloadTask.setOnCancelled(e -> {
                 Platform.runLater(progressStage::close);
             });
 
-            // 启动线程
             Thread thread = new Thread(downloadTask);
             thread.setDaemon(true);
             thread.start();
@@ -314,18 +425,12 @@ public class MainController {
         ConfigRepo.saveToken(null);
 
         try {
-            // 1. 获取并关闭当前主窗口
             Stage currentStage = (Stage) rootStackPane.getScene().getWindow();
             currentStage.close();
 
-            // 2. 创建一个全新的登录窗口 Stage
             Stage loginStage = new Stage();
-
-            // 💡 关键：重新设置登录页需要的无边框透明样式
             loginStage.initStyle(StageStyle.TRANSPARENT);
 
-            // 3. 重新调用 ViewManager 加载登录页
-            // 确保 ViewManager 内部有处理 Scene 透明度的代码（见下文）
             ViewManager.switchView(loginStage, "/view/LoginView.fxml", springContext, "系统登录");
 
         } catch (Exception e) {
@@ -347,12 +452,10 @@ public class MainController {
             scene.setRoot(root);
         }
 
-        // 💡 关键修复点 A：重新加载全局 CSS
-        scene.getStylesheets().clear(); // 先清理旧的，防止主界面的 sidebar 样式污染登录页
+        scene.getStylesheets().clear();
         scene.getStylesheets().add(ViewManager.class.getResource("/css/style.css").toExternalForm());
         scene.getStylesheets().add(ViewManager.class.getResource("/css/login-style.css").toExternalForm());
 
-        // 💡 关键修复点 B：如果是登录页，强制设置背景透明
         if (fxmlPath.contains("LoginView")) {
             scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
         }
@@ -361,5 +464,4 @@ public class MainController {
         stage.centerOnScreen();
         stage.show();
     }
-
 }

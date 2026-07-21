@@ -8,14 +8,10 @@ import com.ray.atten.desktop.utils.AppConstants;
 import com.ray.atten.desktop.utils.CustomAlertDialog;
 import com.ray.atten.desktop.utils.LoadingManager;
 import javafx.animation.TranslateTransition;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
@@ -73,7 +69,7 @@ public class EmployeeListController {
 
     // --- TableView 控件 ---
     private TableView<OaEmployee> employeeTable;
-    private TableColumn<OaEmployee, Boolean> selectColumn; // 替换原 rowNumberColumn
+    private TableColumn<OaEmployee, Boolean> selectColumn;
     private TableColumn<OaEmployee, String> pinColumn, nameColumn, companyColumn, deptColumn, post;
     private TableColumn<OaEmployee, String> fingerprintColumn, photoColumn;
     private TableColumn<OaEmployee, Boolean> inServiceColumn;
@@ -86,7 +82,6 @@ public class EmployeeListController {
     private long totalRecords = 0;
     private String currentSortBy = "createTime";
     private String currentSortOrder = "DESC";
-    private String lastClickedSortBy = "createTime";
     private int currentPageSize = AppConstants.DEFAULT_PAGE_SIZE;
     private Boolean currentInServiceStatus = null;
     private Boolean hasFingerprint = null;
@@ -108,7 +103,7 @@ public class EmployeeListController {
         employeeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         setupPaginationAndControls();
-        setupColumnSorting();
+        // 已取消 setupColumnSorting() 事件监听，禁用表头点击排序功能
         setupStatusChoiceBox();
         setupSearchFilters();
 
@@ -128,7 +123,6 @@ public class EmployeeListController {
 
         selectColumn = new TableColumn<>();
         selectColumn.setGraphic(selectAllCheckBox);
-        selectColumn.setSortable(false);
         selectColumn.setMinWidth(40);
         selectColumn.setMaxWidth(40);
 
@@ -164,20 +158,15 @@ public class EmployeeListController {
         post.setCellValueFactory(new PropertyValueFactory<>("post"));
         fingerprintColumn.setCellValueFactory(data -> {
             OaEmployee emp = data.getValue();
-            // 检查 syncList 中是否包含 type 为 "finger" 且数据不为空的记录
             boolean hasFinger = emp.getSyncList() != null && emp.getSyncList().stream()
                     .anyMatch(s -> "finger".equals(s.getType()) && s.getBase64Data() != null && !s.getBase64Data().isEmpty());
-
-            // 返回一个虚拟的字符串供 setupBinaryStatusColumnFormatting 使用
             return new SimpleStringProperty(hasFinger ? "EXISTS" : "");
         });
         photoColumn.setCellValueFactory(data -> {
             OaEmployee emp = data.getValue();
-            // 优先检查 photoBase64 字段，如果没有，检查 syncList
             boolean hasPhoto = (emp.getPhotoBase64() != null && !emp.getPhotoBase64().isEmpty()) ||
                     (emp.getSyncList() != null && emp.getSyncList().stream()
                             .anyMatch(s -> "photo".equals(s.getType()) && s.getBase64Data() != null && !s.getBase64Data().isEmpty()));
-
             return new SimpleStringProperty(hasPhoto ? "EXISTS" : "");
         });
         inServiceColumn.setCellValueFactory(new PropertyValueFactory<>("inService"));
@@ -188,6 +177,11 @@ public class EmployeeListController {
 
         employeeTable.getColumns().addAll(selectColumn, pinColumn, nameColumn, companyColumn, deptColumn, post,
                 fingerprintColumn, photoColumn, inServiceColumn, entryDateColumn, actionColumn);
+
+        // 💡【核心改进】遍历所有列，将 sortable 设为 false，禁用表头鼠标悬停与点击排序
+        for (TableColumn<OaEmployee, ?> col : employeeTable.getColumns()) {
+            col.setSortable(false);
+        }
     }
 
     private void handleSelectAllAction() {
@@ -212,7 +206,6 @@ public class EmployeeListController {
             loadingManager.hide();
             PageResponse<OaEmployee> res = loadTask.getValue();
             if (res != null) {
-                // 加载新数据时，重置全选框状态
                 selectAllCheckBox.setSelected(false);
                 employeeTable.setItems(FXCollections.observableArrayList(res.getContent()));
                 statusLabel.setText(String.format("页面 %d/%d 加载完成。总记录: %d",
@@ -228,7 +221,6 @@ public class EmployeeListController {
         new Thread(loadTask).start();
     }
 
-    // --- 修改后的批量操作处理 ---
     @FXML
     private void handleBatchSynchronize() {
         List<OaEmployee> selected = employeeTable.getItems().stream()
@@ -254,8 +246,6 @@ public class EmployeeListController {
         }
         openViewInDrawer("/view/BadgePrintView.fxml", new ArrayList<>(selected));
     }
-
-    // --- 其余辅助方法保持逻辑一致 ---
 
     private void setupSearchFilters() {
         fingerprintChoiceBox.getItems().addAll("全部", "已有", "未录");
@@ -339,16 +329,12 @@ public class EmployeeListController {
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
 
-                // 1. 重要：如果该行是空的（没有对应的数据对象）
                 if (empty || getTableRow() == null || getTableRow().getItem() == null) {
                     setText(null);
                     setGraphic(null);
-                    setStyle(""); // 彻底清除背景和样式
+                    setStyle("");
                 } else {
-                    // 2. 该行有数据，执行逻辑判断
                     setAlignment(Pos.CENTER);
-
-                    // 这里的 item 是我们在 CellValueFactory 中定义的 "EXISTS" 或 ""
                     boolean exists = (item != null && !item.isEmpty());
 
                     if (exists) {
@@ -463,31 +449,6 @@ public class EmployeeListController {
         return ap;
     }
 
-    private void setupColumnSorting() {
-        employeeTable.getSortOrder().addListener((ListChangeListener<TableColumn<OaEmployee, ?>>) c -> {
-            if (employeeTable.getSortOrder().isEmpty()) return;
-            TableColumn<OaEmployee, ?> sortColumn = employeeTable.getSortOrder().get(0);
-            String newSortBy = getPropertyNameFromColumn(sortColumn);
-            if (newSortBy != null) {
-                if (newSortBy.equals(lastClickedSortBy))
-                    currentSortOrder = "ASC".equals(currentSortOrder) ? "DESC" : "ASC";
-                else {
-                    currentSortBy = newSortBy;
-                    currentSortOrder = "ASC";
-                }
-                lastClickedSortBy = newSortBy;
-                loadEmployeeData(pagination.getCurrentPageIndex());
-            }
-        });
-    }
-
-    private String getPropertyNameFromColumn(TableColumn<OaEmployee, ?> col) {
-        if (col == pinColumn) return "pin";
-        if (col == inServiceColumn) return "inService";
-        if (col == entryDateColumn) return "entryDate";
-        return null;
-    }
-
     private void openViewInDrawer(String fxmlPath, Object data) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
@@ -497,9 +458,7 @@ public class EmployeeListController {
             if (controller instanceof EmployeeDetailController) {
                 ((EmployeeDetailController) controller).setEmployeeInfo((OaEmployee) data);
                 ((EmployeeDetailController) controller).setOnCloseRequest(() -> {
-                    // 1. 关闭侧边栏
                     closeDrawer();
-                    // 2. 重新加载当前页数据 (这样录入状态就会从“否”变“是”)
                     loadEmployeeData(pagination.getCurrentPageIndex());
                 });
             } else if (controller instanceof SyncGroupController) {
@@ -554,7 +513,6 @@ public class EmployeeListController {
     }
 
     private void refreshCurrentPage() {
-        // 重新加载当前页码的数据，不需要重新计算总页数
         loadEmployeeData(pagination.getCurrentPageIndex());
     }
 

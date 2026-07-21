@@ -587,3 +587,11 @@
 .custom-check-box {
     -fx-text-fill: #2c3e50;
 }
+
+/* 暗黑模式下：預設值顯示為暗灰色/半透明白，自訂輸入恢復為亮白色 */
+.server-default-value {
+    -fx-text-fill: #666666 !important; /* 或者是 rgba(255,255,255,0.4) */
+}
+.server-custom-value {
+    -fx-text-fill: #1c1919 !important;
+}

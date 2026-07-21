@@ -21,8 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -44,11 +42,15 @@ public class ServerSetupController {
     private double xOffset = 0;
     private double yOffset = 0;
 
+    // --- 定义系统的默认配置值 ---
+    private static final String DEFAULT_HOST = "172.16.0.234";
+    private static final String DEFAULT_PORT = "8821";
+
     @FXML
     public void initialize() {
         protocolCombo.getItems().addAll("http://", "https://");
 
-        // --- 新增：从磁盘加载并回显数据 ---
+        // 1. 从磁盘加载并回显数据
         Properties props = ConfigRepo.loadConfig();
         String savedProtocol = props.getProperty("server.protocol");
         String savedHost = props.getProperty("server.host");
@@ -60,14 +62,73 @@ public class ServerSetupController {
             protocolCombo.getSelectionModel().select(0); // 默认 http
         }
 
-        if (savedHost != null) {
+        // --- 【核心修改一】：根据回显状态设置文本与初始灰色样式 ---
+        if (savedHost != null && !savedHost.isEmpty()) {
             hostField.setText(savedHost);
+            // 有保存的值，说明是用户输入过的，给黑色样式
+            updateFieldStyle(hostField, false);
+        } else {
+            // 没有保存的值，直接填入默认IP，并给灰色样式
+            hostField.setText(DEFAULT_HOST);
+            updateFieldStyle(hostField, true);
         }
 
-        if (savedPort != null) {
+        if (savedPort != null && !savedPort.isEmpty()) {
             portField.setText(savedPort);
+            updateFieldStyle(portField, false);
         } else {
-            portField.setText("80");
+            // 没有保存的值，填入你需要的默认端口 8821，并给灰色样式
+            portField.setText(DEFAULT_PORT);
+            updateFieldStyle(portField, true);
+        }
+
+        // --- 【核心修改二】：给两个输入框配置动态颜色监听器 ---
+        setupTextListener(hostField, DEFAULT_HOST);
+        setupTextListener(portField, DEFAULT_PORT);
+
+        // --- 【核心修改三】：贴心优化，当用户点击默认值时自动全选，方便直接打字覆盖 ---
+        setupFocusListener(hostField, DEFAULT_HOST);
+        setupFocusListener(portField, DEFAULT_PORT);
+    }
+
+    /**
+     * 提取的通用文本监听：用户打字或删空时自动切换灰色/黑色
+     */
+    private void setupTextListener(TextField field, String defaultValue) {
+        field.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.equals(defaultValue) || newValue.isEmpty()) {
+                // 如果变回了默认值，或者是空的，显示灰色
+                updateFieldStyle(field, true);
+            } else {
+                // 如果输入了不一样的值，显示黑色
+                updateFieldStyle(field, false);
+            }
+        });
+    }
+
+    /**
+     * 提取的通用焦点监听：获得焦点时如果是默认值就全选
+     */
+    private void setupFocusListener(TextField field, String defaultValue) {
+        field.focusedProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal && field.getText().equals(defaultValue)) {
+                Platform.runLater(field::selectAll);
+            }
+        });
+    }
+
+    /**
+     * 动态切换 JavaFX 的文本框 CSS 颜色属性
+     */
+    private void updateFieldStyle(TextField field, boolean isDefault) {
+        // 1. 先清除我們自訂的這兩個主題關聯樣式，防止重複疊加
+        field.getStyleClass().removeAll("server-default-value", "server-custom-value");
+
+        // 2. 根據狀態，只新增對應的類別名稱
+        if (isDefault) {
+            field.getStyleClass().add("server-default-value");
+        } else {
+            field.getStyleClass().add("server-custom-value");
         }
     }
 
@@ -85,7 +146,6 @@ public class ServerSetupController {
      */
     @FXML
     private void handleMouseDragged(MouseEvent event) {
-        // 通过事件源获取当前的 Stage
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         stage.setX(event.getScreenX() - xOffset);
         stage.setY(event.getScreenY() - yOffset);
@@ -103,10 +163,14 @@ public class ServerSetupController {
 
     @FXML
     public void onConnect() {
-        // 获取界面输入
         final String protocol = protocolCombo.getValue();
-        final String host = hostField.getText().trim();
-        final String portText = portField.getText().trim();
+
+        // --- 【核心修改四】：如果用户直接清空了输入框，则在提交时智能顶上默认值 ---
+        String hostInput = hostField.getText().trim();
+        final String host = hostInput.isEmpty() ? DEFAULT_HOST : hostInput;
+
+        String portInput = portField.getText().trim();
+        final String portText = portInput.isEmpty() ? DEFAULT_PORT : portInput;
 
         // 1. 校验逻辑
         if (host.isEmpty() || !NetworkUtil.isValidHost(host)) {
@@ -128,26 +192,21 @@ public class ServerSetupController {
         Task<Boolean> checkTask = new Task<Boolean>() {
             @Override
             protected Boolean call() throws Exception {
-                // 注意：checkConnection 内部必须处理好异常，不要直接崩掉
                 String cleanProtocol = protocol.replace("://", "");
                 return NetworkUtil.checkConnection(cleanProtocol, host, port);
             }
         };
 
-        // 使用显式的 EventHandler 替代 Lambda（如果在 JDK 8 下运行不稳定）
         checkTask.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
             @Override
             public void handle(WorkerStateEvent event) {
                 Boolean success = checkTask.getValue();
                 if (success != null && success) {
-//                    // 更新全局常量
                     if (checkTask.getValue()) {
                         // 1. 更新内存
                         AppConstants.updateApiBaseUrl(protocol, host, portText);
-
-                        // 2. 写入磁盘（进阶建议的部分，现在补全）
+                        // 2. 写入磁盘
                         ConfigRepo.saveConfig(protocol, host, portText, "dark");
-
                         // 3. 跳转
                         Platform.runLater(new Runnable() {
                             @Override
@@ -171,28 +230,22 @@ public class ServerSetupController {
         });
 
         Thread thread = new Thread(checkTask);
-        thread.setDaemon(true); // 设置为守护线程
+        thread.setDaemon(true);
         thread.start();
     }
 
     private void switchToMain() {
         try {
-            // 只要是当前窗口的一个控件即可，这里假设用 protocolCombo
             Stage stage = (Stage) protocolCombo.getScene().getWindow();
-
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/LoginView.fxml"));
-            // 这里的 springContext 需要在 Controller 中 @Autowired 注入
             loader.setControllerFactory(springContext::getBean);
-
             Parent root = loader.load();
             Scene scene = new Scene(root);
             stage.setScene(scene);
-            stage.centerOnScreen(); // 切换后居中显示
+            stage.centerOnScreen();
         } catch (IOException e) {
             e.printStackTrace();
             statusLabel.setText("加载主界面失败: " + e.getMessage());
         }
     }
-
-
 }

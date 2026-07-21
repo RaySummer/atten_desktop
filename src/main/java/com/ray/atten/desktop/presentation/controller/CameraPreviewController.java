@@ -19,7 +19,7 @@ import javafx.util.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.awt.Dimension;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -80,8 +80,30 @@ public class CameraPreviewController {
         btnConfirm.setManaged(isCaptured);
 
         if (cropperTool != null) {
-            if (isCaptured) cropperTool.activate();
-            else cropperTool.deactivate();
+            if (isCaptured) {
+                // 1. 先激活
+                cropperTool.activate();
+
+                // 2. 修改大框的初始尺寸（高度铺满，宽度稍微窄一点符合工牌比例）
+                Platform.runLater(() -> {
+                    double viewW = videoImageView.getBoundsInParent().getWidth();
+                    double viewH = videoImageView.getBoundsInParent().getHeight();
+
+                    javafx.scene.shape.Rectangle rect = cropperTool.getSelection();
+                    if (rect != null) {
+                        rect.setY(0);
+                        rect.setHeight(viewH); // 铺满窗口全高
+                        double defaultWidth = viewW * 0.55; // 默认给一个合适的工牌宽度
+                        rect.setX((viewW - defaultWidth) / 2); // 居中
+                        rect.setWidth(defaultWidth);
+
+                        // 【极其重要的一步】：改完宽高后，手动让工具类重新刷一次遮罩！
+                        cropperTool.refresh();
+                    }
+                });
+            } else {
+                cropperTool.deactivate();
+            }
         }
     }
 
@@ -112,16 +134,18 @@ public class CameraPreviewController {
                 double ratioX = fullBI.getWidth() / viewW;
                 double ratioY = fullBI.getHeight() / viewH;
 
+                // --- 【核心修改二】：从业务上杜绝高度误差 ---
+                // 宽度和 X 坐标依然根据用户的拖拽去计算
                 int x = (int) (rect.getX() * ratioX);
-                int y = (int) (rect.getY() * ratioY);
                 int w = (int) (rect.getWidth() * ratioX);
-                int h = (int) (rect.getHeight() * ratioY);
+
+                // 高度固定为窗口/图片的满高，Y 坐标直接锁死在最顶层 0
+                int y = 0;
+                int h = fullBI.getHeight();
 
                 // 强制修正坐标，防止 getSubimage 坐标越界异常
                 x = Math.max(0, Math.min(x, fullBI.getWidth() - 1));
-                y = Math.max(0, Math.min(y, fullBI.getHeight() - 1));
                 w = Math.max(1, Math.min(w, fullBI.getWidth() - x));
-                h = Math.max(1, Math.min(h, fullBI.getHeight() - y));
 
                 BufferedImage cropped = fullBI.getSubimage(x, y, w, h);
                 this.photoBase64 = ImageConverter.encodeImageToBase64(ImageConverter.resizeImage(cropped, 480, 480));

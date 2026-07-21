@@ -123,6 +123,58 @@ public class SysAppVersionService {
     public void executeUpdaterScript(String version) {
         try {
             String userHome = System.getProperty("user.home");
+            // 1. 新下载的 Jar 绝对路径
+            File tempNewJar = new File(userHome + File.separator + ".atten_desktop" + File.separator + "update_cache", "update_new.jar");
+
+            // 2. 【核心修复】：精准获取当前正在运行的 Jar 的物理文件对象
+            File currentJarFile = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
+
+            // 3. 无论在哪，这才是真正需要被覆盖的旧 Jar 目标路径
+            String targetJarPath = currentJarFile.getAbsolutePath();
+
+            // 4. 【核心修复】：精准定位打包后的 AttenDesktop.exe
+            // jpackage 的标准结构中，Jar 位于 app/ 目录下，Exe 位于 app/ 的上一级目录
+            File appDir = currentJarFile.getParentFile();
+            File exeFile = new File(appDir.getParentFile(), "AttenDesktop.exe");
+
+            // 5. 保存新版本号
+            ConfigRepo.saveVersion(version);
+
+            // 6. 日志输出路径
+            File logFile = new File(userHome + File.separator + ".atten_desktop", "update_log.txt");
+
+            String cmdCommand;
+            if (exeFile.exists()) {
+                // 【打包环境】：等 3 秒 -> 强行覆盖真正的 Jar -> 启动上一级目录的 Exe
+                cmdCommand = String.format("cmd.exe /c timeout /t 3 & copy /y \"%s\" \"%s\" > \"%s\" 2>&1 & start \"\" \"%s\"",
+                        tempNewJar.getAbsolutePath(),
+                        targetJarPath,
+                        logFile.getAbsolutePath(),
+                        exeFile.getAbsolutePath());
+            } else {
+                // 【本地 IDE 开发环境】：没有 Exe，只替换 Jar 不重启
+                cmdCommand = String.format("cmd.exe /c timeout /t 3 & copy /y \"%s\" \"%s\" > \"%s\" 2>&1",
+                        tempNewJar.getAbsolutePath(),
+                        targetJarPath,
+                        logFile.getAbsolutePath());
+            }
+
+            System.out.println("【免提权升级】最终执行绝对路径指令: " + cmdCommand);
+
+            // 7. 异步拉起
+            Runtime.getRuntime().exec(cmdCommand);
+
+            // 8. 立即退出，让出文件锁
+            System.exit(0);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+   /* public void executeUpdaterScript(String version) {
+        try {
+            String userHome = System.getProperty("user.home");
             File tempNewJar = new File(userHome + File.separator + ".atten_desktop" + File.separator + "update_cache", "update_new.jar");
 
             File currentJarFile = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
@@ -152,6 +204,6 @@ public class SysAppVersionService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
 }
