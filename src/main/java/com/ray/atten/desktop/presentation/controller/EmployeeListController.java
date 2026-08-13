@@ -76,7 +76,7 @@ public class EmployeeListController {
 
     private CheckBox selectAllCheckBox;
 
-    // 💡【核心改动1】使用 Map 跨页缓存所有被勾选的员工对象（以 pin 为 Key，可根据你的主键调整，如 id）
+    // 跨页缓存所有被勾选的员工对象
     private final Map<String, OaEmployee> selectedEmployeeMap = new HashMap<>();
 
     private final ObservableList<Integer> pageSizeOptions = FXCollections.observableArrayList(10, 20, 50, 100);
@@ -191,6 +191,31 @@ public class EmployeeListController {
                 selectedEmployeeMap.remove(emp.getPin());
             }
         });
+        updateStatusLabelText(pagination.getCurrentPageIndex() + 1);
+    }
+
+    // 💡【新增功能】清空所有已勾选的记录（跨页与当前页）
+    @FXML
+    private void handleClearSelection() {
+        if (selectedEmployeeMap.isEmpty()) {
+            return;
+        }
+
+        // 1. 清空跨页缓存 Map
+        selectedEmployeeMap.clear();
+
+        // 2. 取消当前表格中所有渲染对象的选中状态
+        if (employeeTable.getItems() != null) {
+            employeeTable.getItems().forEach(emp -> emp.setSelected(false));
+        }
+
+        // 3. 取消表头的全选框勾选
+        if (selectAllCheckBox != null) {
+            selectAllCheckBox.setSelected(false);
+        }
+
+        // 4. 更新底部状态栏信息
+        updateStatusLabelText(pagination.getCurrentPageIndex() + 1);
     }
 
     private void loadEmployeeData(int pageIndex) {
@@ -212,32 +237,27 @@ public class EmployeeListController {
             if (res != null) {
                 List<OaEmployee> pageList = res.getContent();
 
-                // 💡【核心改动2】数据加载后，回显之前选中的状态，并绑定监听器
                 for (OaEmployee emp : pageList) {
-                    // 如果跨页缓存中包含该工号，恢复选中状态
                     if (selectedEmployeeMap.containsKey(emp.getPin())) {
                         emp.setSelected(true);
                     } else {
                         emp.setSelected(false);
                     }
 
-                    // 监听当前页每一行的勾选改变，同步更新缓存
                     emp.selectedProperty().addListener((observable, oldValue, newValue) -> {
                         if (Boolean.TRUE.equals(newValue)) {
                             selectedEmployeeMap.put(emp.getPin(), emp);
                         } else {
                             selectedEmployeeMap.remove(emp.getPin());
                         }
-                        // 动态更新表头的“全选框”状态
                         updateSelectAllCheckBoxState();
+                        updateStatusLabelText(pageIndex + 1);
                     });
                 }
 
                 employeeTable.setItems(FXCollections.observableArrayList(pageList));
-                updateSelectAllCheckBoxState(); // 更新全选复选框
-
-                statusLabel.setText(String.format("页面 %d/%d 加载完成。总记录: %d | 当前已勾选: %d 人",
-                        pageIndex + 1, pagination.getPageCount(), res.getTotalElements(), selectedEmployeeMap.size()));
+                updateSelectAllCheckBoxState();
+                updateStatusLabelText(pageIndex + 1);
             }
         });
 
@@ -249,7 +269,6 @@ public class EmployeeListController {
         new Thread(loadTask).start();
     }
 
-    // 💡【新增方法】根据当前页勾选情况自动刷新表头全选框的状态
     private void updateSelectAllCheckBoxState() {
         ObservableList<OaEmployee> items = employeeTable.getItems();
         if (items == null || items.isEmpty()) {
@@ -260,7 +279,11 @@ public class EmployeeListController {
         selectAllCheckBox.setSelected(allSelected);
     }
 
-    // 💡【核心改动3】从跨页缓存选中的 Map 中获取所有选中的员工，而不是仅从当前页表格中读取
+    private void updateStatusLabelText(int currentPage) {
+        statusLabel.setText(String.format("页面 %d/%d 加载完成。总记录: %d | 当前已勾选: %d 人",
+                currentPage, pagination.getPageCount(), totalRecords, selectedEmployeeMap.size()));
+    }
+
     @FXML
     private void handleBatchSynchronize() {
         List<OaEmployee> selected = new ArrayList<>(selectedEmployeeMap.values());
@@ -272,7 +295,6 @@ public class EmployeeListController {
         openViewInDrawer("/view/SyncGroupView.fxml", selected);
     }
 
-    // 💡【核心改动4】同样支持跨页选中的打印处理
     @FXML
     private void handlePrintBadge() {
         List<OaEmployee> selected = new ArrayList<>(selectedEmployeeMap.values());
@@ -350,17 +372,14 @@ public class EmployeeListController {
                 int calculatedPages = (int) Math.ceil((double) totalRecords / currentPageSize);
                 int pageCount = Math.max(1, calculatedPages);
 
-                // 1. 优先设置正确的页数
                 pagination.setPageCount(pageCount);
 
-                // 2. 修正当前页码索引，防止超过最大页数
                 int current = pagination.getCurrentPageIndex();
                 if (current >= pageCount) {
                     current = pageCount - 1;
                     pagination.setCurrentPageIndex(current);
                 }
 
-                // 3. 强制刷新当前页内容及指示器状态
                 loadEmployeeData(current);
                 updatePageButtonStates(current);
             }
@@ -415,8 +434,6 @@ public class EmployeeListController {
                     currentInServiceStatus = null;
                     break;
             }
-            // 重新搜索或切换筛选条件时，可根据需求选择是否清空已选集合
-            // selectedEmployeeMap.clear();
             updatePaginationMetadata();
         });
     }
@@ -491,23 +508,16 @@ public class EmployeeListController {
             }
         });
 
-        // 设置页面工厂
         pagination.setPageFactory(this::createPage);
-
-        // 💡 延迟注入“首页”和“末页”按钮
         tryInjectFirstAndLastButtons(0);
     }
 
-    /**
-     * 动态查找 JavaFX Pagination 内部的 HBox 并注入“首页”和“末页”按钮
-     */
     private void tryInjectFirstAndLastButtons(int retryCount) {
         javafx.application.Platform.runLater(() -> {
             Node controlBox = pagination.lookup(".control-box");
 
-            // 如果 Pagination 还没完成 DOM 树渲染，使用 PauseTransition 延迟 100ms 重试
             if (controlBox == null) {
-                if (retryCount < 10) { // 最多重试 10 次
+                if (retryCount < 10) {
                     javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(Duration.millis(100));
                     delay.setOnFinished(event -> tryInjectFirstAndLastButtons(retryCount + 1));
                     delay.play();
@@ -518,12 +528,10 @@ public class EmployeeListController {
             if (controlBox instanceof HBox) {
                 HBox hbox = (HBox) controlBox;
 
-                // 检查是否已经注入过，避免重复插入
                 if (hbox.getChildren().stream().anyMatch(node -> "first-page-btn".equals(node.getId()))) {
                     return;
                 }
 
-                // 1. 创建【首页】按钮
                 firstPageBtn = new Button("首页");
                 firstPageBtn.setId("first-page-btn");
                 firstPageBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #333333; -fx-cursor: hand; -fx-padding: 4 8;");
@@ -533,7 +541,6 @@ public class EmployeeListController {
                     }
                 });
 
-                // 2. 创建【末页】按钮
                 lastPageBtn = new Button("末页");
                 lastPageBtn.setId("last-page-btn");
                 lastPageBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #333333; -fx-cursor: hand; -fx-padding: 4 8;");
@@ -544,19 +551,14 @@ public class EmployeeListController {
                     }
                 });
 
-                // 3. 动态插入到工具栏中
                 hbox.getChildren().add(0, firstPageBtn);
                 hbox.getChildren().add(lastPageBtn);
 
-                // 4. 刷新按钮启用/禁用状态
                 updatePageButtonStates(pagination.getCurrentPageIndex());
             }
         });
     }
 
-    /**
-     * 更新“首页”、“末页”及边界按钮状态，解决最后一页还能再点下一页的 Bug
-     */
     private void updatePageButtonStates(int pageIndex) {
         int totalPages = pagination.getPageCount();
 
@@ -571,7 +573,6 @@ public class EmployeeListController {
             lastPageBtn.setOpacity(isLast ? 0.4 : 1.0);
         }
 
-        // 强行禁用最后一页的“下一页”和第一页的“上一页”点击响应，彻底解决越界问题
         Node nextBtn = pagination.lookup(".next-button");
         if (nextBtn != null) {
             boolean isLast = (pageIndex >= totalPages - 1);
@@ -588,7 +589,6 @@ public class EmployeeListController {
     }
 
     private Node createPage(int pageIndex) {
-        // 💡 校验页码边界，防止超出最大页数
         int totalPages = pagination.getPageCount();
         if (totalPages > 0 && pageIndex >= totalPages) {
             pageIndex = totalPages - 1;
@@ -665,8 +665,6 @@ public class EmployeeListController {
 
     @FXML
     private void handleSearch() {
-        // 如果进行关键词搜索，建议清空先前选中的记录（可根据业务选择保留或清空）
-        // selectedEmployeeMap.clear();
         updatePaginationMetadata();
     }
 

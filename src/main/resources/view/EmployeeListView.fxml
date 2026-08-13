@@ -31,7 +31,10 @@
 
                     <Button onAction="#handleSearch" styleClass="accent-button" text="查询" />
 
-                    <Region HBox.hgrow="ALWAYS" /> <Button fx:id="batchSyncButton" onAction="#handleBatchSynchronize" styleClass="accent-button" text="批量同步" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <!-- 💡 新增：清空勾选按钮 -->
+                    <Button fx:id="clearSelectionButton" onAction="#handleClearSelection" styleClass="accent-button" text="清空勾选" />
+                    <Button fx:id="batchSyncButton" onAction="#handleBatchSynchronize" styleClass="accent-button" text="批量同步" />
                     <Button fx:id="printBadgeButton" onAction="#handlePrintBadge" styleClass="accent-button" text="打印工牌" />
                 </children>
             </HBox>
