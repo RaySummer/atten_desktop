@@ -269,10 +269,10 @@ public class AttendanceController {
                     String type = String.valueOf(item);
                     switch (type) {
                         case "1":
-                            setText("指紋");
+                            setText("指纹");
                             break;
                         case "15":
-                            setText("人臉");
+                            setText("人脸");
                             break;
                         case "4":
                             setText("卡片");
