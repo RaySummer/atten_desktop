@@ -371,36 +371,45 @@ public class MainController {
             progressStage.setScene(scene);
             progressStage.show();
 
+            // 1. 创建下载 Task
             Task<File> downloadTask = versionService.createDownloadTask(relativeUrl);
 
+            // 2. 绑定 UI
             progressController.getProgressBar().progressProperty().bind(downloadTask.progressProperty());
             progressController.getStatusLabel().textProperty().bind(downloadTask.messageProperty());
 
+            // 3. 成功回调（Task 回调默认在 JavaFX 线程，无需 Platform.runLater）
             downloadTask.setOnSucceeded(e -> {
-                Platform.runLater(() -> {
-                    progressStage.close();
+                progressStage.close();
+                File downloadedFile = downloadTask.getValue();
+                if (downloadedFile != null && downloadedFile.exists()) {
                     versionService.executeUpdaterScript(version);
-                });
+                } else {
+                    CustomAlertDialog.showError("更新失败", "下载的文件不存在或损坏");
+                }
             });
 
+            // 4. 失败回调：打印堆栈并显示真实错误
             downloadTask.setOnFailed(e -> {
-                Platform.runLater(() -> {
-                    progressStage.close();
-                    Throwable ex = downloadTask.getException();
-                    CustomAlertDialog.showError("更新失败", "下载包损坏或网络超时");
-                });
+                progressStage.close();
+                Throwable ex = downloadTask.getException();
+                if (ex != null) {
+                    ex.printStackTrace(); // 💡 在控制台/日志中打印真实堆栈
+                }
+                String detailMsg = (ex != null && ex.getMessage() != null) ? ex.getMessage() : "网络超时或服务器无响应";
+                CustomAlertDialog.showError("下载失败", "原因: " + detailMsg);
             });
 
-            downloadTask.setOnCancelled(e -> {
-                Platform.runLater(progressStage::close);
-            });
+            downloadTask.setOnCancelled(e -> progressStage.close());
 
-            Thread thread = new Thread(downloadTask);
-            thread.setDaemon(true);
-            thread.start();
+            // 5. 启动线程
+            Thread downloadThread = new Thread(downloadTask, "Update-Download-Thread");
+            downloadThread.setDaemon(true);
+            downloadThread.start();
 
-        } catch (IOException e) {
-            CustomAlertDialog.showError("加载失败", "无法启动下载窗口");
+        } catch (Exception e) {
+            e.printStackTrace();
+            CustomAlertDialog.showError("加载失败", "无法启动下载窗口: " + e.getMessage());
         }
     }
 

@@ -93,9 +93,28 @@ public class ImageConverter {
      * 辅助方法：编码为 Base64
      */
     public static String encodeImageToBase64(BufferedImage image) {
+        if (image == null) {
+            return null;
+        }
+
+        // 如果包含 Alpha 通道，重新绘制到 TYPE_INT_RGB 的画布上
+        if (image.getType() == BufferedImage.TYPE_INT_ARGB || image.getColorModel().hasAlpha()) {
+            BufferedImage newImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
+            Graphics2D g = newImage.createGraphics();
+            // 设置白底填充（避免透明区域变黑）
+            g.setColor(Color.WHITE);
+            g.fillRect(0, 0, image.getWidth(), image.getHeight());
+            g.drawImage(image, 0, 0, null);
+            g.dispose();
+            image = newImage;
+        }
+
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-            // 写入到 ByteArrayOutputStream，使用 JPEG 格式并进行质量压缩
-            ImageIO.write(image, "jpg", os);
+            boolean success = ImageIO.write(image, "png", os);
+            if (!success) {
+                System.err.println("ImageIO 找不到合适的 JPG Writer！");
+                return null;
+            }
             return Base64.getEncoder().encodeToString(os.toByteArray());
         } catch (IOException e) {
             e.printStackTrace();
